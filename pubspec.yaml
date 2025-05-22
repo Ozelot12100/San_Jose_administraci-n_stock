@@ -37,7 +37,6 @@ dependencies:
 
   # Estado y gestión de datos
   provider: ^6.1.1
-  shared_preferences: ^2.2.2
   
   # UI y diseño
   google_fonts: ^6.1.0
@@ -57,6 +56,7 @@ dependencies:
   # Seguridad
   crypto: ^3.0.3
   flutter_secure_storage: ^9.0.0
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:
@@ -112,16 +112,6 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
   assets:
-    - assets/images/
-    - assets/icons/
+    - assets/images/logo_sanjose.png
+    # - assets/icons/
     
-  fonts:
-    - family: Poppins
-      fonts:
-        - asset: assets/fonts/Poppins-Regular.ttf
-        - asset: assets/fonts/Poppins-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Poppins-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/Poppins-Bold.ttf
-          weight: 700

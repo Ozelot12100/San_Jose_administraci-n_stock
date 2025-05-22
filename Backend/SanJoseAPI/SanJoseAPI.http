@@ -1,0 +1,6 @@
+@SanJoseAPI_HostAddress = http://localhost:5177
+
+GET {{SanJoseAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

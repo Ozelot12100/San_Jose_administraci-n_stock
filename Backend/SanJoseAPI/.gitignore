@@ -1,0 +1,33 @@
+# Archivos y carpetas a ignorar para un proyecto .NET/C#
+# Carpetas de compilación
+bin/
+obj/
+
+# Archivos de usuario de Visual Studio
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Archivos temporales y de configuración
+*.log
+*.vspscc
+*.vssscc
+*.pdb
+*.cache
+*.dbmdl
+*.bak
+*.swp
+*.tmp
+
+# Archivos de configuración sensibles
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+# Archivos de publicación
+publish/
+
+# Archivos de Rider
+.idea/
+*.sln.iml

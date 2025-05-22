@@ -1,50 +1,34 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/usuario.dart';
+import '../config/api_config.dart';
 
 class AuthService {
-  static const _storage = FlutterSecureStorage();
-  static const _baseUrl = 'http://localhost:5000/api'; // TODO: Configurar URL base
-  static const _tokenKey = 'auth_token';
-  static const _userKey = 'user_data';
+  static const String _userKey = 'current_user';
 
-  // Obtener el token almacenado
-  Future<String?> getToken() async {
-    return await _storage.read(key: _tokenKey);
-  }
-
-  // Obtener el usuario almacenado
-  Future<Usuario?> getStoredUser() async {
-    final userJson = await _storage.read(key: _userKey);
-    if (userJson == null) return null;
-    return Usuario.fromJson(json.decode(userJson));
-  }
-
-  // Login
-  Future<Usuario> login(String usuario, String password) async {
+  // Login simple
+  Future<Usuario> login(String nombreUsuario, String password) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/auth/login'),
+        Uri.parse('${ApiConfig.baseUrl}/Auth/login-simple'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
-          'usuario': usuario,
-          'contrasena': password,
+          'usuario': nombreUsuario,
+          'password': password,
         }),
       );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['exito'] == true && data['usuario'] != null) {
         final user = Usuario.fromJson(data['usuario']);
-        final token = data['token'];
-
-        // Guardar token y usuario
-        await _storage.write(key: _tokenKey, value: token);
-        await _storage.write(key: _userKey, value: json.encode(user.toJson()));
-
+        
+        // Guardar usuario en preferencias
+        await _saveUserToPrefs(user);
+        
         return user;
       } else {
-        final error = json.decode(response.body)['message'] ?? 'Error de autenticación';
+        final error = data['mensaje'] ?? 'Error de autenticación';
         throw Exception(error);
       }
     } catch (e) {
@@ -52,38 +36,39 @@ class AuthService {
     }
   }
 
-  // Logout
+  // Logout - eliminar datos de sesión
   Future<void> logout() async {
-    await _storage.delete(key: _tokenKey);
-    await _storage.delete(key: _userKey);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_userKey);
+  }
+
+  // Guardar usuario en preferencias
+  Future<void> _saveUserToPrefs(Usuario user) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userJson = jsonEncode(user.toJson());
+    await prefs.setString(_userKey, userJson);
+  }
+
+  // Obtener usuario almacenado en preferencias
+  Future<Usuario?> getStoredUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userJson = prefs.getString(_userKey);
+    
+    if (userJson != null) {
+      try {
+        final userData = jsonDecode(userJson);
+        return Usuario.fromJson(userData);
+      } catch (e) {
+        print('Error deserializando usuario: $e');
+        return null;
+      }
+    }
+    return null;
   }
 
   // Verificar si hay una sesión activa
   Future<bool> isAuthenticated() async {
-    final token = await getToken();
-    if (token == null) return false;
-
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/auth/verify'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      return response.statusCode == 200;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  // Obtener headers con el token
-  Future<Map<String, String>> getAuthHeaders() async {
-    final token = await getToken();
-    return {
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-    };
+    final user = await getStoredUser();
+    return user != null;
   }
 } 
