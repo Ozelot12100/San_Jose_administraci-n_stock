@@ -22,7 +22,9 @@ class _MovimientoFormState extends State<MovimientoForm> {
   final _formKey = GlobalKey<FormState>();
   int? _insumoId;
   int _cantidad = 1;
-  final TextEditingController _cantidadController = TextEditingController(text: '1');
+  final TextEditingController _cantidadController = TextEditingController(
+    text: '1',
+  );
   bool _isLoading = false;
   final GlobalKey<FormFieldState> _insumoFieldKey = GlobalKey<FormFieldState>();
   List<Insumo> _insumosDisponibles = [];
@@ -39,7 +41,7 @@ class _MovimientoFormState extends State<MovimientoForm> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final isAdmin = authProvider.currentUser?.isAdmin ?? false;
     final areaId = authProvider.currentUser?.idArea;
-    
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => InsumoProvider()..fetchInsumos()),
@@ -72,13 +74,18 @@ class _MovimientoFormState extends State<MovimientoForm> {
                   const SizedBox(width: 8),
                   FilledButton(
                     onPressed: _isLoading ? null : _guardar,
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(widget.tipo == 'entrada' ? 'Registrar Entrada' : 'Registrar Salida'),
+                    child:
+                        _isLoading
+                            ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                            : Text(
+                              widget.tipo == 'entrada'
+                                  ? 'Registrar Entrada'
+                                  : 'Registrar Salida',
+                            ),
                   ),
                 ],
               ),
@@ -117,12 +124,15 @@ class _MovimientoFormState extends State<MovimientoForm> {
           ),
           value: _insumoId,
           hint: const Text('Seleccionar insumo'),
-          items: insumos.map((insumo) {
-            return DropdownMenuItem<int>(
-              value: insumo.id,
-              child: Text('${insumo.nombreInsumo} (Stock: ${insumo.stock})'),
-            );
-          }).toList(),
+          items:
+              insumos.map((insumo) {
+                return DropdownMenuItem<int>(
+                  value: insumo.id,
+                  child: Text(
+                    '${insumo.nombreInsumo} (Stock: ${insumo.stock})',
+                  ),
+                );
+              }).toList(),
           onChanged: (value) {
             setState(() {
               _insumoId = value;
@@ -167,7 +177,9 @@ class _MovimientoFormState extends State<MovimientoForm> {
           if (_insumoId == null) {
             return 'Seleccione un insumo primero';
           }
-          final insumo = _insumosDisponibles.firstWhereOrNull((i) => i.id == _insumoId);
+          final insumo = _insumosDisponibles.firstWhereOrNull(
+            (i) => i.id == _insumoId,
+          );
           if (insumo == null) {
             return 'Seleccione un insumo válido';
           }
@@ -206,7 +218,7 @@ class _MovimientoFormState extends State<MovimientoForm> {
     if (widget.tipo != 'entrada' && widget.tipo != 'salida') {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tipo de movimiento inválido.')), 
+        const SnackBar(content: Text('Tipo de movimiento inválido.')),
       );
       return;
     }
@@ -247,18 +259,25 @@ class _MovimientoFormState extends State<MovimientoForm> {
       if (success) {
         Navigator.pop(context);
         try {
-          final insumoProvider = Provider.of<InsumoProvider>(context, listen: false);
+          final insumoProvider = Provider.of<InsumoProvider>(
+            context,
+            listen: false,
+          );
           insumoProvider.fetchInsumos();
         } catch (_) {}
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${widget.tipo == 'entrada' ? 'Entrada' : 'Salida'} registrada correctamente')),
+          SnackBar(
+            content: Text(
+              '${widget.tipo == 'entrada' ? 'Entrada' : 'Salida'} registrada correctamente',
+            ),
+          ),
         );
       } else if (provider.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(provider.error!)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(provider.error!)));
       }
       setState(() => _isLoading = false);
     }
   }
-} 
+}

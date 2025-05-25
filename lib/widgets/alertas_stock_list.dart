@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/alerta_stock.dart';
 import '../providers/alerta_provider.dart';
 import 'alerta_stock_card.dart';
 

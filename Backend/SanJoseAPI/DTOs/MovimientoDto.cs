@@ -31,8 +31,8 @@ namespace SanJoseAPI.DTOs
         public int IdArea { get; set; }
 
         // Propiedades de navegación para incluir detalles
-        public InsumoDto Insumo { get; set; }
-        public UsuarioDto Usuario { get; set; }
-        public AreaDto Area { get; set; }
+        public InsumoDto? Insumo { get; set; }
+        public UsuarioDto? Usuario { get; set; }
+        public AreaDto? Area { get; set; }
     }
-} 
+}

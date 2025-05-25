@@ -18,33 +18,49 @@ class _ReportesScreenState extends State<ReportesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return ChangeNotifierProvider(
       create: (_) => ReporteProvider(),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Reportes'),
-          automaticallyImplyLeading: false, // Para no mostrar flecha de regreso (usa el drawer)
+          automaticallyImplyLeading:
+              false, // Para no mostrar flecha de regreso (usa el drawer)
         ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildReportSelector(),
-              const SizedBox(height: 16),
-              
-              // Parámetros específicos del reporte
-              _buildReportParameters(),
-              const SizedBox(height: 24),
-              
-              // Botones de acción
-              _buildActionButtons(),
-              const SizedBox(height: 24),
-              
-              // Resultados del reporte
-              Expanded(
-                child: _buildReportResults(),
+              // Cabecera de bienvenida (opcional, similar a dashboard)
+              Card(
+                elevation: 2,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.bar_chart, size: 32, color: Colors.blue),
+                      const SizedBox(width: 16),
+                      Text(
+                        'Genera y descarga reportes',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
+              const SizedBox(height: 24),
+              _buildReportSelector(theme),
+              const SizedBox(height: 24),
+              _buildReportParameters(theme),
+              const SizedBox(height: 24),
+              _buildFormatSelector(theme),
+              const SizedBox(height: 24),
+              _buildActionButtons(theme),
+              const SizedBox(height: 24),
+              Expanded(child: _buildReportResults(theme)),
             ],
           ),
         ),
@@ -52,30 +68,48 @@ class _ReportesScreenState extends State<ReportesScreen> {
     );
   }
 
-  Widget _buildReportSelector() {
+  Widget _buildReportSelector(ThemeData theme) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Tipo de Reporte',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               isExpanded: true,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
               ),
               value: _selectedReport,
               items: const [
-                DropdownMenuItem(value: 'inventario', child: Text('Inventario Actual')),
-                DropdownMenuItem(value: 'movimientos', child: Text('Movimientos por Período')),
-                DropdownMenuItem(value: 'consumo', child: Text('Consumo por Áreas')),
-                DropdownMenuItem(value: 'bajo-stock', child: Text('Insumos con Bajo Stock')),
+                DropdownMenuItem(
+                  value: 'inventario',
+                  child: Text('Inventario Actual'),
+                ),
+                DropdownMenuItem(
+                  value: 'movimientos',
+                  child: Text('Movimientos por Período'),
+                ),
+                DropdownMenuItem(
+                  value: 'consumo',
+                  child: Text('Consumo por Áreas'),
+                ),
+                DropdownMenuItem(
+                  value: 'bajo-stock',
+                  child: Text('Insumos con Bajo Stock'),
+                ),
               ],
               onChanged: (value) {
                 setState(() {
@@ -89,12 +123,12 @@ class _ReportesScreenState extends State<ReportesScreen> {
     );
   }
 
-  Widget _buildReportParameters() {
+  Widget _buildReportParameters(ThemeData theme) {
     // Diferentes parámetros según el tipo de reporte
     switch (_selectedReport) {
       case 'inventario':
         return const SizedBox.shrink(); // No necesita parámetros
-        
+
       case 'movimientos':
       case 'consumo':
         return Card(
@@ -103,9 +137,12 @@ class _ReportesScreenState extends State<ReportesScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Parámetros',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -131,7 +168,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
             ),
           ),
         );
-        
+
       case 'bajo-stock':
         return Card(
           child: Padding(
@@ -139,9 +176,12 @@ class _ReportesScreenState extends State<ReportesScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Parámetros',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -161,33 +201,76 @@ class _ReportesScreenState extends State<ReportesScreen> {
             ),
           ),
         );
-        
+
       default:
         return const SizedBox.shrink();
     }
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildFormatSelector(ThemeData theme) {
     return Consumer<ReporteProvider>(
       builder: (context, provider, _) {
+        return Row(
+          children: [
+            Text(
+              'Formato de descarga:',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(width: 16),
+            DropdownButton<String>(
+              value: provider.formatoDescarga,
+              items: const [
+                DropdownMenuItem(value: 'pdf', child: Text('PDF')),
+                DropdownMenuItem(value: 'excel', child: Text('Excel')),
+                DropdownMenuItem(value: 'csv', child: Text('CSV')),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  provider.cambiarFormato(value);
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildActionButtons(ThemeData theme) {
+    return Consumer<ReporteProvider>(
+      builder: (context, provider, _) {
+        final buttonStyle = FilledButton.styleFrom(
+          backgroundColor: Colors.blue,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          textStyle: const TextStyle(fontWeight: FontWeight.bold),
+        );
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
-              child: ElevatedButton.icon(
+              child: FilledButton.icon(
                 icon: const Icon(Icons.refresh),
                 label: const Text('Generar Reporte'),
-                onPressed: provider.isLoading ? null : () => _generarReporte(provider),
+                style: buttonStyle,
+                onPressed:
+                    provider.isLoading ? null : () => _generarReporte(provider),
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: FilledButton.icon(
                 icon: const Icon(Icons.download),
-                label: Text('Descargar ${provider.formatoDescarga.toUpperCase()}'),
-                onPressed: provider.isLoading || provider.reporteActual == null
-                    ? null
-                    : () => _descargarReporte(provider),
+                label: Text(
+                  'Descargar ${provider.formatoDescarga.toUpperCase()}',
+                ),
+                style: buttonStyle,
+                onPressed:
+                    provider.isLoading || provider.reporteActual == null
+                        ? null
+                        : () => _descargarReporte(provider),
               ),
             ),
           ],
@@ -196,7 +279,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
     );
   }
 
-  Widget _buildReportResults() {
+  Widget _buildReportResults(ThemeData theme) {
     return Consumer<ReporteProvider>(
       builder: (context, provider, _) {
         if (provider.isLoading) {
@@ -211,7 +294,6 @@ class _ReportesScreenState extends State<ReportesScreen> {
             ),
           );
         }
-
         if (provider.error != null) {
           return Center(
             child: Column(
@@ -221,7 +303,8 @@ class _ReportesScreenState extends State<ReportesScreen> {
                 const SizedBox(height: 16),
                 Text('Error: ${provider.error}'),
                 const SizedBox(height: 16),
-                ElevatedButton(
+                FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: Colors.red),
                   onPressed: () => provider.clearError(),
                   child: const Text('Reintentar'),
                 ),
@@ -229,14 +312,13 @@ class _ReportesScreenState extends State<ReportesScreen> {
             ),
           );
         }
-
         if (provider.reporteActual == null) {
           return const Center(
-            child: Text('Seleccione un reporte y genérelo para ver los resultados'),
+            child: Text(
+              'Seleccione un reporte y genérelo para ver los resultados',
+            ),
           );
         }
-
-        // Mostrar resultados del reporte
         return Card(
           elevation: 2,
           margin: const EdgeInsets.symmetric(vertical: 8),
@@ -247,19 +329,50 @@ class _ReportesScreenState extends State<ReportesScreen> {
               children: [
                 Text(
                   provider.reporteActual!.titulo,
-                  style: Theme.of(context).textTheme.titleLarge,
+                  style: theme.textTheme.titleLarge,
                 ),
-                const SizedBox(height: 16),
-                if (provider.reporteActual!.datos.isNotEmpty)
+                const SizedBox(height: 24),
+                if (provider.reporteActual!.datos.isEmpty)
+                  Center(
+                    child: Text(
+                      'No hay datos para mostrar en este reporte',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: Colors.grey,
+                      ),
+                    ),
+                  )
+                else
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: DataTable(
-                      columns: provider.reporteActual!.datos.first.keys.map((col) => DataColumn(
-                        label: Text(col, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      )).toList(),
-                      rows: provider.reporteActual!.datos.map((fila) => DataRow(
-                        cells: fila.values.map((valor) => DataCell(Text(valor?.toString() ?? ''))).toList(),
-                      )).toList(),
+                      columns:
+                          provider.reporteActual!.datos.first.keys
+                              .map(
+                                (col) => DataColumn(
+                                  label: Text(
+                                    col,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                      rows:
+                          provider.reporteActual!.datos
+                              .map(
+                                (fila) => DataRow(
+                                  cells:
+                                      fila.values
+                                          .map(
+                                            (valor) => DataCell(
+                                              Text(valor?.toString() ?? ''),
+                                            ),
+                                          )
+                                          .toList(),
+                                ),
+                              )
+                              .toList(),
                     ),
                   ),
               ],
@@ -282,9 +395,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
           labelText: label,
           border: const OutlineInputBorder(),
         ),
-        child: Text(
-          DateFormat('dd/MM/yyyy').format(value),
-        ),
+        child: Text(DateFormat('dd/MM/yyyy').format(value)),
       ),
     );
   }
@@ -297,7 +408,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
       firstDate: DateTime(now.year - 5),
       lastDate: now,
     );
-    
+
     if (picked != null) {
       setState(() {
         if (isStartDate) {
@@ -334,7 +445,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
 
   Future<void> _descargarReporte(ReporteProvider provider) async {
     Map<String, dynamic> params = {};
-    
+
     switch (_selectedReport) {
       case 'inventario':
         // Sin parámetros adicionales
@@ -350,13 +461,16 @@ class _ReportesScreenState extends State<ReportesScreen> {
         params = {'umbral': _umbral};
         break;
     }
-    
-    final success = await provider.descargarReporteActual(_selectedReport, params);
-    
+
+    final success = await provider.descargarReporteActual(
+      _selectedReport,
+      params,
+    );
+
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Reporte descargado correctamente')),
       );
     }
   }
-} 
+}

@@ -73,26 +73,31 @@ namespace SanJoseAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<MovimientoDto>> PostMovimiento(MovimientoDto movimientoDto)
         {
+            Console.WriteLine("POST /movimientos recibido");
+            Console.WriteLine($"Datos recibidos: {System.Text.Json.JsonSerializer.Serialize(movimientoDto)}");
             // Validación de campos obligatorios
             if (movimientoDto.IdInsumo == 0 || movimientoDto.IdUsuario == 0 || movimientoDto.IdArea == 0)
             {
+                Console.WriteLine("Faltan datos obligatorios");
                 return BadRequest("Faltan datos obligatorios para registrar el movimiento (id_insumo, id_usuario o id_area).");
             }
 
             var insumo = await _insumoRepository.GetByIdAsync(movimientoDto.IdInsumo);
             if (insumo == null)
             {
+                Console.WriteLine("Insumo no existe");
                 return BadRequest(AppConstants.InsumoNoExiste);
             }
 
             // Validación de tipo_movimiento
             if (movimientoDto.TipoMovimiento != "entrada" && movimientoDto.TipoMovimiento != "salida")
             {
+                Console.WriteLine("Tipo de movimiento inválido: " + movimientoDto.TipoMovimiento);
                 return BadRequest("El tipo de movimiento debe ser 'entrada' o 'salida'.");
             }
 
             var movimiento = movimientoDto.ToModel();
-            
+            Console.WriteLine($"Movimiento a guardar: {System.Text.Json.JsonSerializer.Serialize(movimiento)}");
             // Actualizar el stock del insumo
             if (movimiento.TipoMovimiento == "entrada")
             {
@@ -102,6 +107,7 @@ namespace SanJoseAPI.Controllers
             {
                 if (insumo.Stock < movimiento.Cantidad)
                 {
+                    Console.WriteLine("Stock insuficiente");
                     return BadRequest(AppConstants.InsuficienteStock);
                 }
                 insumo.Stock -= movimiento.Cantidad;
@@ -109,10 +115,10 @@ namespace SanJoseAPI.Controllers
 
             // Guardar el movimiento
             await _movimientoRepository.AddAsync(movimiento);
-            
+            Console.WriteLine("Movimiento guardado correctamente");
             // Actualizar el insumo
             await _insumoRepository.UpdateAsync(insumo);
-
+            Console.WriteLine("Stock de insumo actualizado");
             return CreatedAtAction(nameof(GetMovimiento), new { id = movimiento.Id }, movimiento.ToDto());
         }
 
@@ -148,4 +154,4 @@ namespace SanJoseAPI.Controllers
             return NoContent();
         }
     }
-} 
+}

@@ -78,7 +78,10 @@ class ReporteProvider extends ChangeNotifier {
   }
 
   // Obtener reporte de movimientos simplificado
-  Future<void> obtenerReporteMovimientosSimple(DateTime inicio, DateTime fin) async {
+  Future<void> obtenerReporteMovimientosSimple(
+    DateTime inicio,
+    DateTime fin,
+  ) async {
     _isLoading = true;
     _error = null;
     _datosSimples = null;
@@ -113,14 +116,22 @@ class ReporteProvider extends ChangeNotifier {
   }
 
   // Obtener reporte de consumo por área específica
-  Future<void> obtenerReporteConsumoPorArea(int areaId, DateTime inicio, DateTime fin) async {
+  Future<void> obtenerReporteConsumoPorArea(
+    int areaId,
+    DateTime inicio,
+    DateTime fin,
+  ) async {
     _isLoading = true;
     _error = null;
     _datosSimples = null;
     notifyListeners();
 
     try {
-      _datosSimples = await _service.getReporteConsumoPorAreaEspecifica(areaId, inicio, fin);
+      _datosSimples = await _service.getReporteConsumoPorAreaEspecifica(
+        areaId,
+        inicio,
+        fin,
+      );
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -148,7 +159,10 @@ class ReporteProvider extends ChangeNotifier {
   }
 
   // Descargar reporte actual
-  Future<bool> descargarReporteActual(String tipoReporte, Map<String, dynamic> params) async {
+  Future<bool> descargarReporteActual(
+    String tipoReporte,
+    Map<String, dynamic> params,
+  ) async {
     _isLoading = true;
     _error = null;
     _rutaArchivoDescargado = null;
@@ -156,9 +170,15 @@ class ReporteProvider extends ChangeNotifier {
 
     try {
       if (_formatoDescarga == 'pdf') {
-        _rutaArchivoDescargado = await _service.descargarReportePDF(tipoReporte, params);
+        _rutaArchivoDescargado = await _service.descargarReportePDF(
+          tipoReporte,
+          params,
+        );
       } else {
-        _rutaArchivoDescargado = await _service.descargarReporteExcel(tipoReporte, params);
+        _rutaArchivoDescargado = await _service.descargarReporteExcel(
+          tipoReporte,
+          params,
+        );
       }
       return true;
     } catch (e) {
@@ -183,4 +203,4 @@ class ReporteProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
   }
-} 
+}

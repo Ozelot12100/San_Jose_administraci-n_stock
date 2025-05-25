@@ -46,8 +46,11 @@ class MovimientoProvider extends ChangeNotifier {
     try {
       // Si hay filtros de fecha, usamos ese endpoint
       if (_fechaInicio != null && _fechaFin != null) {
-        _movimientos = await _service.getMovimientosByFecha(_fechaInicio!, _fechaFin!);
-      } 
+        _movimientos = await _service.getMovimientosByFecha(
+          _fechaInicio!,
+          _fechaFin!,
+        );
+      }
       // Si hay filtro de insumo
       else if (_insumoId != null) {
         _movimientos = await _service.getMovimientosByInsumo(_insumoId!);
@@ -59,7 +62,8 @@ class MovimientoProvider extends ChangeNotifier {
 
       // Aplicamos filtro por tipo si está establecido
       if (_tipoMovimiento != null) {
-        _movimientos = _movimientos.where((m) => m.tipo == _tipoMovimiento).toList();
+        _movimientos =
+            _movimientos.where((m) => m.tipo == _tipoMovimiento).toList();
       }
     } catch (e) {
       _error = e.toString();
@@ -94,10 +98,10 @@ class MovimientoProvider extends ChangeNotifier {
     try {
       // Convertir el Map a un objeto Movimiento
       final movimiento = Movimiento.fromJson(movimientoData);
-      
+
       // Usar el método actualizado del servicio
       final newMovimiento = await _service.createMovimiento(movimiento);
-      
+
       _movimientos.add(newMovimiento);
       return true;
     } catch (e) {
@@ -164,4 +168,4 @@ class MovimientoProvider extends ChangeNotifier {
   String formatFecha(DateTime fecha) {
     return DateFormat('dd/MM/yyyy HH:mm').format(fecha);
   }
-} 
+}

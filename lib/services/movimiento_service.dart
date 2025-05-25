@@ -13,7 +13,9 @@ class MovimientoService {
 
       if (response.statusCode == 200) {
         List<dynamic> movimientosJson = json.decode(response.body);
-        return movimientosJson.map((json) => Movimiento.fromJson(json)).toList();
+        return movimientosJson
+            .map((json) => Movimiento.fromJson(json))
+            .toList();
       } else {
         throw Exception('Error al cargar movimientos');
       }
@@ -42,10 +44,12 @@ class MovimientoService {
   // Crear movimiento
   Future<Movimiento> createMovimiento(Movimiento movimiento) async {
     try {
+      final jsonBody = movimiento.toCreateJson();
+      print('JSON enviado al backend (movimiento): ${json.encode(jsonBody)}');
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/movimientos'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode(movimiento.toJson()),
+        body: json.encode(jsonBody),
       );
 
       if (response.statusCode == 201) {
@@ -64,7 +68,7 @@ class MovimientoService {
       final response = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/movimientos/insumo/$insumoId'),
       );
-      
+
       if (response.statusCode == 200) {
         final List<dynamic> movimientosJson = json.decode(response.body);
         return movimientosJson.map((e) => Movimiento.fromJson(e)).toList();
@@ -77,15 +81,20 @@ class MovimientoService {
   }
 
   // Obtener movimientos por fecha
-  Future<List<Movimiento>> getMovimientosByFecha(DateTime fechaInicio, DateTime fechaFin) async {
+  Future<List<Movimiento>> getMovimientosByFecha(
+    DateTime fechaInicio,
+    DateTime fechaFin,
+  ) async {
     try {
       final inicio = fechaInicio.toIso8601String().split('T')[0];
       final fin = fechaFin.toIso8601String().split('T')[0];
-      
+
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/movimientos/fecha?inicio=$inicio&fin=$fin'),
+        Uri.parse(
+          '${ApiConfig.baseUrl}/movimientos/fecha?inicio=$inicio&fin=$fin',
+        ),
       );
-      
+
       if (response.statusCode == 200) {
         final List<dynamic> movimientosJson = json.decode(response.body);
         return movimientosJson.map((e) => Movimiento.fromJson(e)).toList();
@@ -96,4 +105,4 @@ class MovimientoService {
       throw Exception('Error de conexión: ${e.toString()}');
     }
   }
-} 
+}

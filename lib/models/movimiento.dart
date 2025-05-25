@@ -30,25 +30,41 @@ class Movimiento {
       if (value is int) return value;
       return int.tryParse(value.toString()) ?? 0;
     }
+
     String parseString(dynamic value) {
       if (value == null) return '';
       if (value is String) return value;
       return value.toString();
     }
+
     return Movimiento(
       id: parseInt(json['id']),
       tipo: parseString(json['tipo_movimiento'] ?? json['tipo']),
-      fecha: DateTime.parse(json['fecha'] as String),
+      fecha:
+          json['fecha'] != null &&
+                  json['fecha'] is String &&
+                  (json['fecha'] as String).isNotEmpty
+              ? DateTime.parse(json['fecha'] as String)
+              : DateTime.now(),
       cantidad: parseInt(json['cantidad']),
       insumoId: parseInt(json['id_insumo'] ?? json['insumoId']),
       areaId: parseInt(json['id_area'] ?? json['areaId']),
       usuarioId: parseInt(json['id_usuario'] ?? json['usuarioId']),
-      insumo: json['insumo'] != null
-          ? Insumo.fromJson(json['insumo'] as Map<String, dynamic>)
-          : Insumo(id: 0, nombreInsumo: '', descripcion: '', unidad: '', stock: 0, stockMinimo: 0),
-      area: json['area'] != null
-          ? Area.fromJson(json['area'] as Map<String, dynamic>)
-          : Area(id: 0, nombreArea: '', estado: true),
+      insumo:
+          (json['insumo'] is Map<String, dynamic>)
+              ? Insumo.fromJson(json['insumo'] as Map<String, dynamic>)
+              : Insumo(
+                id: 0,
+                nombreInsumo: '',
+                descripcion: '',
+                unidad: '',
+                stock: 0,
+                stockMinimo: 0,
+              ),
+      area:
+          (json['area'] is Map<String, dynamic>)
+              ? Area.fromJson(json['area'] as Map<String, dynamic>)
+              : Area(id: 0, nombreArea: '', estado: true),
     );
   }
 
@@ -66,8 +82,19 @@ class Movimiento {
     };
   }
 
+  /// Solo para creación de movimientos: envía solo los campos requeridos por el backend
+  Map<String, dynamic> toCreateJson() {
+    return {
+      'tipo_movimiento': tipo,
+      'cantidad': cantidad,
+      'id_insumo': insumoId,
+      'id_area': areaId,
+      'id_usuario': usuarioId,
+    };
+  }
+
   @override
   String toString() {
     return 'Movimiento(id: $id, tipo: $tipo, fecha: $fecha, cantidad: $cantidad, insumoId: $insumoId, areaId: $areaId, usuarioId: $usuarioId, insumo: $insumo, area: $area)';
   }
-} 
+}
