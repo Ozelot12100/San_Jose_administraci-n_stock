@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import '../config/api_config.dart';
+import 'package:downloads_path_provider_28/downloads_path_provider_28.dart';
+import 'package:intl/intl.dart';
 
 class ReporteData {
   final String titulo;
@@ -217,13 +219,23 @@ class ReporteService {
       );
 
       if (response.statusCode == 200) {
-        // Guardar el PDF en el dispositivo
-        final directory = await getApplicationDocumentsDirectory();
-        final filePath = '${directory.path}/reporte_$tipoReporte.pdf';
-
+        Directory? directory;
+        if (Platform.isWindows) {
+          directory = Directory(r'C:\Users\david\Downloads');
+        } else {
+          directory = await getApplicationDocumentsDirectory();
+        }
+        final now = DateTime.now();
+        final fechaStr = DateFormat('yyyy-MM-dd').format(now);
+        String baseName = 'reporte_${tipoReporte}_$fechaStr.pdf';
+        String filePath = '${directory.path}/$baseName';
+        int count = 1;
+        while (await File(filePath).exists()) {
+          filePath = '${directory.path}/reporte_${tipoReporte}_$fechaStr($count).pdf';
+          count++;
+        }
         final file = File(filePath);
         await file.writeAsBytes(response.bodyBytes);
-
         return filePath;
       } else {
         throw Exception('Error al descargar reporte PDF');
@@ -250,16 +262,69 @@ class ReporteService {
       );
 
       if (response.statusCode == 200) {
-        // Guardar el Excel en el dispositivo
-        final directory = await getApplicationDocumentsDirectory();
-        final filePath = '${directory.path}/reporte_$tipoReporte.xlsx';
-
+        Directory? directory;
+        if (Platform.isWindows) {
+          directory = Directory(r'C:\Users\david\Downloads');
+        } else {
+          directory = await getApplicationDocumentsDirectory();
+        }
+        final now = DateTime.now();
+        final fechaStr = DateFormat('yyyy-MM-dd').format(now);
+        String baseName = 'reporte_${tipoReporte}_$fechaStr.xlsx';
+        String filePath = '${directory.path}/$baseName';
+        int count = 1;
+        while (await File(filePath).exists()) {
+          filePath = '${directory.path}/reporte_${tipoReporte}_$fechaStr($count).xlsx';
+          count++;
+        }
         final file = File(filePath);
         await file.writeAsBytes(response.bodyBytes);
-
         return filePath;
       } else {
         throw Exception('Error al descargar reporte Excel');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión: ${e.toString()}');
+    }
+  }
+
+  // Descargar reporte en CSV
+  Future<String> descargarReporteCSV(
+    String tipoReporte,
+    Map<String, dynamic> params,
+  ) async {
+    try {
+      final queryParams = params.entries
+          .map((e) => '${e.key}=${e.value}')
+          .join('&');
+
+      final response = await http.get(
+        Uri.parse(
+          '${ApiConfig.baseUrl}/reportes/$tipoReporte/csv?$queryParams',
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        Directory? directory;
+        if (Platform.isWindows) {
+          directory = Directory(r'C:\Users\david\Downloads');
+        } else {
+          directory = await getApplicationDocumentsDirectory();
+        }
+        final now = DateTime.now();
+        final fechaStr = DateFormat('yyyy-MM-dd').format(now);
+        String baseName = 'reporte_${tipoReporte}_$fechaStr.csv';
+        String filePath = '${directory.path}/$baseName';
+        int count = 1;
+        while (await File(filePath).exists()) {
+          filePath = '${directory.path}/reporte_${tipoReporte}_$fechaStr($count).csv';
+          count++;
+        }
+        final file = File(filePath);
+        await file.writeAsBytes(response.bodyBytes);
+        return filePath;
+      } else {
+        throw Exception('Error al descargar reporte CSV');
       }
     } catch (e) {
       throw Exception('Error de conexión: ${e.toString()}');

@@ -16,6 +16,7 @@ class MovimientoProvider extends ChangeNotifier {
   DateTime? _fechaFin;
   int? _insumoId;
   String? _tipoMovimiento; // 'entrada', 'salida', o null para todos
+  String? _busquedaInsumo;
 
   // Getters
   List<Movimiento> get movimientos => _movimientos;
@@ -26,6 +27,7 @@ class MovimientoProvider extends ChangeNotifier {
   DateTime? get fechaFin => _fechaFin;
   int? get insumoId => _insumoId;
   String? get tipoMovimiento => _tipoMovimiento;
+  String? get busquedaInsumo => _busquedaInsumo;
 
   @override
   void dispose() {
@@ -64,6 +66,30 @@ class MovimientoProvider extends ChangeNotifier {
       if (_tipoMovimiento != null) {
         _movimientos =
             _movimientos.where((m) => m.tipo == _tipoMovimiento).toList();
+      }
+      // Filtro por rango de fechas (si hay fechaInicio y/o fechaFin, ignorar hora)
+      if (_fechaInicio != null || _fechaFin != null) {
+        _movimientos = _movimientos.where((m) {
+          final movFecha = DateTime(m.fecha.year, m.fecha.month, m.fecha.day);
+          final desde = _fechaInicio != null ? DateTime(_fechaInicio!.year, _fechaInicio!.month, _fechaInicio!.day) : null;
+          final hasta = _fechaFin != null ? DateTime(_fechaFin!.year, _fechaFin!.month, _fechaFin!.day) : null;
+          if (desde != null && hasta != null) {
+            return (movFecha.isAtSameMomentAs(desde) || movFecha.isAfter(desde)) &&
+                   (movFecha.isAtSameMomentAs(hasta) || movFecha.isBefore(hasta));
+          } else if (desde != null) {
+            return movFecha.isAtSameMomentAs(desde) || movFecha.isAfter(desde);
+          } else if (hasta != null) {
+            return movFecha.isAtSameMomentAs(hasta) || movFecha.isBefore(hasta);
+          }
+          return true;
+        }).toList();
+      }
+      // Filtro por nombre de insumo (en memoria)
+      if (_busquedaInsumo != null && _busquedaInsumo!.trim().isNotEmpty) {
+        final busqueda = _busquedaInsumo!.toLowerCase();
+        _movimientos = _movimientos.where((m) =>
+          m.insumo?.nombreInsumo.toLowerCase().contains(busqueda) ?? false
+        ).toList();
       }
     } catch (e) {
       _error = e.toString();
@@ -119,6 +145,8 @@ class MovimientoProvider extends ChangeNotifier {
     DateTime? fechaFin,
     int? insumoId,
     String? tipoMovimiento,
+    String? busquedaInsumo,
+    bool forzar = false,
   }) {
     bool changed = false;
 
@@ -142,7 +170,12 @@ class MovimientoProvider extends ChangeNotifier {
       changed = true;
     }
 
-    if (changed) {
+    if (busquedaInsumo != _busquedaInsumo) {
+      _busquedaInsumo = busquedaInsumo;
+      changed = true;
+    }
+
+    if (changed || forzar) {
       safeNotifyListeners();
       fetchMovimientos(); // Recargar con los nuevos filtros
     }
@@ -154,6 +187,7 @@ class MovimientoProvider extends ChangeNotifier {
     _fechaFin = null;
     _insumoId = null;
     _tipoMovimiento = null;
+    _busquedaInsumo = null;
     safeNotifyListeners();
     fetchMovimientos(); // Recargar sin filtros
   }

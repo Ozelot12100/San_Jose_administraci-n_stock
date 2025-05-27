@@ -48,15 +48,13 @@ dependencies:
   dio: ^5.4.0
   
   # Utilidades
-  pdf: ^3.10.7
-  excel: ^3.0.0
   path_provider: ^2.1.2
-  sqflite: ^2.3.2
   
   # Seguridad
   crypto: ^3.0.3
   flutter_secure_storage: ^9.0.0
   shared_preferences: ^2.5.3
+  downloads_path_provider_28: ^0.1.2
 
 dev_dependencies:
   flutter_test:

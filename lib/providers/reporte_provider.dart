@@ -174,8 +174,13 @@ class ReporteProvider extends ChangeNotifier {
           tipoReporte,
           params,
         );
-      } else {
+      } else if (_formatoDescarga == 'excel') {
         _rutaArchivoDescargado = await _service.descargarReporteExcel(
+          tipoReporte,
+          params,
+        );
+      } else if (_formatoDescarga == 'csv') {
+        _rutaArchivoDescargado = await _service.descargarReporteCSV(
           tipoReporte,
           params,
         );

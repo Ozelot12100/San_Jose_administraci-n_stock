@@ -5,18 +5,48 @@ import 'package:intl/intl.dart';
 import '../../providers/movimiento_provider.dart';
 import 'movimiento_form.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/insumo_provider.dart';
 
-class MovimientosScreen extends StatelessWidget {
+class MovimientosScreen extends StatefulWidget {
   const MovimientosScreen({super.key});
 
   @override
+  State<MovimientosScreen> createState() => _MovimientosScreenState();
+}
+
+class _MovimientosScreenState extends State<MovimientosScreen> {
+  late TextEditingController _busquedaController;
+  DateTime? _fechaSeleccionada;
+
+  @override
+  void initState() {
+    super.initState();
+    final provider = MovimientoProvider();
+    _busquedaController = TextEditingController(text: provider.busquedaInsumo ?? '');
+  }
+
+  @override
+  void dispose() {
+    _busquedaController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => MovimientoProvider()..fetchMovimientos(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => MovimientoProvider()..fetchMovimientos()),
+        ChangeNotifierProvider(create: (_) => InsumoProvider()..fetchInsumos()),
+      ],
       child: Builder(
         builder: (context) {
           final isAdmin = Provider.of<AuthProvider>(context, listen: false).currentUser?.isAdmin ?? false;
           final authProvider = Provider.of<AuthProvider>(context, listen: false);
+          final provider = context.watch<MovimientoProvider>();
+          // Filtros activos
+          final filtersActive = (provider.busquedaInsumo != null && provider.busquedaInsumo!.isNotEmpty) ||
+                                provider.tipoMovimiento != null ||
+                                provider.fechaInicio != null;
           return Scaffold(
         appBar: AppBar(
           title: const Text('Movimientos'),
@@ -33,73 +63,97 @@ class MovimientosScreen extends StatelessWidget {
                       }
                     },
                   ),
-            Builder(
-              builder: (context) {
-                final provider = context.watch<MovimientoProvider>();
-                return IconButton(
-                  icon: const Icon(Icons.filter_list),
-                  onPressed: () => _mostrarFiltros(context),
-                  tooltip: 'Filtrar',
-                );
+              ],
+            ),
+            body: Column(
+              children: [
+                // Zona de filtros
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Buscador
+                          TextField(
+                            controller: _busquedaController,
+                            decoration: InputDecoration(
+                              hintText: 'Buscar por nombre de insumo',
+                              prefixIcon: const Icon(Icons.search),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+                            ),
+                            onChanged: (value) {
+                              context.read<MovimientoProvider>().setFiltros(busquedaInsumo: value);
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          // Filtro de tipo
+                          Row(
+                            children: [
+                              const Text('Tipo:', style: TextStyle(fontWeight: FontWeight.w500)),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: SegmentedButton<String?>(
+                                  segments: const [
+                                    ButtonSegment(value: null, label: Text('Todos')),
+                                    ButtonSegment(value: 'entrada', label: Text('Entradas')),
+                                    ButtonSegment(value: 'salida', label: Text('Salidas')),
+                                  ],
+                                  selected: {provider.tipoMovimiento},
+                                  onSelectionChanged: (values) {
+                                    context.read<MovimientoProvider>().setFiltros(tipoMovimiento: values.first);
               },
+                                ),
             ),
           ],
         ),
-        body: Builder(
-          builder: (context) {
-            final provider = context.watch<MovimientoProvider>();
-            if (provider.isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            
-            if (provider.error != null) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                          const SizedBox(height: 12),
+                          // Filtro de rango de fechas
+                          Row(
                   children: [
-                    Text('Error: ${provider.error}'),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => provider.fetchMovimientos(),
-                      child: const Text('Reintentar'),
+                              Expanded(
+                                child: _FechaFiltroField(
+                                  label: 'Fecha inicio',
+                                  value: provider.fechaInicio,
+                                  onChanged: (date) {
+                                    context.read<MovimientoProvider>().setFiltros(fechaInicio: date);
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _FechaFiltroField(
+                                  label: 'Fecha fin',
+                                  value: provider.fechaFin,
+                                  onChanged: (date) {
+                                    context.read<MovimientoProvider>().setFiltros(fechaFin: date);
+                                  },
+                                ),
+                              ),
+                              if (provider.fechaInicio != null || provider.fechaFin != null)
+                                IconButton(
+                                  icon: const Icon(Icons.clear, size: 20),
+                                  tooltip: 'Limpiar rango',
+                                  onPressed: () {
+                                    context.read<MovimientoProvider>().setFiltros(fechaInicio: null, fechaFin: null);
+                                  },
                     ),
                   ],
                 ),
-              );
-            }
-
-            // Mostrar filtros activos
-            final filtersActive = provider.fechaInicio != null || 
-                                  provider.fechaFin != null || 
-                                  provider.insumoId != null || 
-                                  provider.tipoMovimiento != null;
-            
-            if (provider.movimientos.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (filtersActive) ...[
-                      const Text('No hay movimientos con los filtros seleccionados'),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () => provider.clearFiltros(),
-                        child: const Text('Limpiar Filtros'),
+                        ],
                       ),
-                    ] else
-                      const Text('No hay movimientos registrados'),
-                  ],
+                    ),
+                  ),
                 ),
-              );
-            }
-
-            return Column(
-              children: [
-                // Mostrar barra de filtros activos
+                // Barra de filtros activos
                 if (filtersActive)
-                  Container(
-                    color: Colors.blue.withOpacity(0.1),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: Row(
                       children: [
                         const Icon(Icons.filter_list, size: 20),
@@ -118,10 +172,42 @@ class MovimientosScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                
                 // Lista de movimientos
                 Expanded(
-                  child: ListView.builder(
+                  child: provider.isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : provider.error != null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text('Error: \\${provider.error}'),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: () => provider.fetchMovimientos(),
+                                child: const Text('Reintentar'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : provider.movimientos.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (filtersActive) ...[
+                                  const Text('No hay movimientos con los filtros seleccionados'),
+                                  const SizedBox(height: 16),
+                                  ElevatedButton(
+                                    onPressed: () => provider.clearFiltros(),
+                                    child: const Text('Limpiar Filtros'),
+                                  ),
+                                ] else
+                                  const Text('No hay movimientos registrados'),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
                     itemCount: provider.movimientos.length,
                         padding: const EdgeInsets.all(12),
                     itemBuilder: (context, index) {
@@ -136,7 +222,7 @@ class MovimientosScreen extends StatelessWidget {
                                 size: 32,
                           ),
                           title: Text(
-                            'Cantidad: ${movimiento.cantidad} | ${movimiento.insumo?.nombreInsumo ?? 'Insumo #${movimiento.insumoId}'}',
+                                    '${movimiento.insumo?.nombreInsumo ?? 'Insumo #${movimiento.insumoId}'} | Cantidad: ${movimiento.cantidad}',
                                 style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           subtitle: Column(
@@ -176,8 +262,6 @@ class MovimientosScreen extends StatelessWidget {
                   ),
                 ),
               ],
-            );
-          },
         ),
         floatingActionButton: _buildFab(context),
           );
@@ -225,20 +309,12 @@ class MovimientosScreen extends StatelessWidget {
     );
   }
 
-  void _mostrarFiltros(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => _FiltrosMovimientos(),
-    );
-  }
-
   String _buildFilterText(MovimientoProvider provider) {
     final List<String> filters = [];
     
-    if (provider.fechaInicio != null && provider.fechaFin != null) {
+    if (provider.fechaInicio != null) {
       final inicio = DateFormat('dd/MM/yyyy').format(provider.fechaInicio!);
-      final fin = DateFormat('dd/MM/yyyy').format(provider.fechaFin!);
-      filters.add('Fecha: $inicio - $fin');
+      filters.add('Fecha: $inicio');
     }
     
     if (provider.tipoMovimiento != null) {
@@ -253,115 +329,29 @@ class MovimientosScreen extends StatelessWidget {
   }
 }
 
-class _FiltrosMovimientos extends StatefulWidget {
-  @override
-  _FiltrosMovimientosState createState() => _FiltrosMovimientosState();
-}
+// Widget para el campo de fecha reutilizable
+class _FechaFiltroField extends StatelessWidget {
+  final String label;
+  final DateTime? value;
+  final ValueChanged<DateTime?> onChanged;
 
-class _FiltrosMovimientosState extends State<_FiltrosMovimientos> {
-  DateTime? _fechaInicio;
-  DateTime? _fechaFin;
-  String? _tipoMovimiento;
-  
-  @override
-  void initState() {
-    super.initState();
-    final provider = Provider.of<MovimientoProvider>(context, listen: false);
-    _fechaInicio = provider.fechaInicio;
-    _fechaFin = provider.fechaFin;
-    _tipoMovimiento = provider.tipoMovimiento;
-  }
+  const _FechaFiltroField({required this.label, required this.value, required this.onChanged});
   
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Filtrar Movimientos',
-            style: Theme.of(context).textTheme.titleLarge,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          
-          // Filtro de tipo
-          const Text('Tipo de Movimiento'),
-          SegmentedButton<String?>(
-            segments: const [
-              ButtonSegment(value: null, label: Text('Todos')),
-              ButtonSegment(value: 'entrada', label: Text('Entradas')),
-              ButtonSegment(value: 'salida', label: Text('Salidas')),
-            ],
-            selected: {_tipoMovimiento},
-            onSelectionChanged: (values) {
-              setState(() {
-                _tipoMovimiento = values.first;
-              });
-            },
-          ),
-          const SizedBox(height: 16),
-          
-          // Filtro de fechas
-          Row(
-            children: [
-              Expanded(
-                child: _buildDateField(
-                  label: 'Fecha Inicio',
-                  value: _fechaInicio,
-                  onTap: () => _selectDate(context, true),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildDateField(
-                  label: 'Fecha Fin',
-                  value: _fechaFin,
-                  onTap: () => _selectDate(context, false),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          
-          // Botones
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              TextButton(
-                onPressed: () {
-                  Provider.of<MovimientoProvider>(context, listen: false).clearFiltros();
-                  Navigator.pop(context);
-                },
-                child: const Text('Limpiar Filtros'),
-              ),
-              FilledButton(
-                onPressed: () {
-                  Provider.of<MovimientoProvider>(context, listen: false).setFiltros(
-                    fechaInicio: _fechaInicio,
-                    fechaFin: _fechaFin,
-                    tipoMovimiento: _tipoMovimiento,
-                  );
-                  Navigator.pop(context);
-                },
-                child: const Text('Aplicar Filtros'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildDateField({
-    required String label,
-    required DateTime? value,
-    required VoidCallback onTap,
-  }) {
     return InkWell(
-      onTap: onTap,
+      onTap: () async {
+        final DateTime now = DateTime.now();
+        final DateTime? picked = await showDatePicker(
+          context: context,
+          initialDate: value ?? now,
+          firstDate: DateTime(now.year - 5),
+          lastDate: DateTime(now.year + 1),
+        );
+        if (picked != null) {
+          onChanged(DateTime(picked.year, picked.month, picked.day));
+        }
+      },
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: label,
@@ -369,38 +359,10 @@ class _FiltrosMovimientosState extends State<_FiltrosMovimientos> {
         ),
         child: Text(
           value != null
-              ? DateFormat('dd/MM/yyyy').format(value)
+              ? DateFormat('dd/MM/yyyy').format(value!)
               : 'Seleccionar',
         ),
       ),
     );
   }
-  
-  Future<void> _selectDate(BuildContext context, bool isStartDate) async {
-    final DateTime now = DateTime.now();
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: isStartDate ? _fechaInicio ?? now : _fechaFin ?? now,
-      firstDate: DateTime(now.year - 5),
-      lastDate: DateTime(now.year + 1),
-    );
-    
-    if (picked != null) {
-      setState(() {
-        if (isStartDate) {
-          _fechaInicio = picked;
-          // Si la fecha de inicio es posterior a la de fin, actualizar la de fin
-          if (_fechaFin != null && _fechaInicio!.isAfter(_fechaFin!)) {
-            _fechaFin = _fechaInicio;
-          }
-        } else {
-          _fechaFin = picked;
-          // Si la fecha de fin es anterior a la de inicio, actualizar la de inicio
-          if (_fechaInicio != null && _fechaFin!.isBefore(_fechaInicio!)) {
-            _fechaInicio = _fechaFin;
-          }
-        }
-      });
-    }
-  }
-} 
+}

@@ -19,9 +19,7 @@ namespace SanJoseAPI.Repositories
 
         public async Task<IEnumerable<Insumo>> GetInsumosConProveedorAsync()
         {
-            return await _context.Insumos
-                .Include(i => i.Proveedor)
-                .ToListAsync();
+            return await _context.Insumos.Include(i => i.Proveedor).ToListAsync();
         }
 
         public async Task<Insumo> GetInsumoPorIdConProveedorAsync(int id)

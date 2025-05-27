@@ -32,26 +32,6 @@ class _ReportesScreenState extends State<ReportesScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Cabecera de bienvenida (opcional, similar a dashboard)
-              Card(
-                elevation: 2,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.bar_chart, size: 32, color: Colors.blue),
-                      const SizedBox(width: 16),
-                      Text(
-                        'Genera y descarga reportes',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
               _buildReportSelector(theme),
               const SizedBox(height: 24),
               _buildReportParameters(theme),
@@ -268,9 +248,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
                 ),
                 style: buttonStyle,
                 onPressed:
-                    provider.isLoading || provider.reporteActual == null
-                        ? null
-                        : () => _descargarReporte(provider),
+                    provider.isLoading ? null : () => _descargarReporte(provider),
               ),
             ),
           ],
@@ -468,8 +446,9 @@ class _ReportesScreenState extends State<ReportesScreen> {
     );
 
     if (success && mounted) {
+      final ruta = provider.rutaArchivoDescargado;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Reporte descargado correctamente')),
+        SnackBar(content: Text('Reporte descargado correctamente en:\n$ruta')),
       );
     }
   }
