@@ -8,7 +8,7 @@ class MovimientoService {
   Future<List<Movimiento>> getMovimientos() async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/movimientos'),
+        Uri.parse('${ApiConfig.baseUrl}/api/movimientos'),
       );
 
       if (response.statusCode == 200) {
@@ -28,7 +28,7 @@ class MovimientoService {
   Future<Movimiento> getMovimientoById(int id) async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/movimientos/$id'),
+        Uri.parse('${ApiConfig.baseUrl}/api/movimientos/$id'),
       );
 
       if (response.statusCode == 200) {
@@ -47,7 +47,7 @@ class MovimientoService {
       final jsonBody = movimiento.toCreateJson();
       print('JSON enviado al backend (movimiento): ${json.encode(jsonBody)}');
       final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/movimientos'),
+        Uri.parse('${ApiConfig.baseUrl}/api/movimientos'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(jsonBody),
       );
@@ -66,7 +66,7 @@ class MovimientoService {
   Future<List<Movimiento>> getMovimientosByInsumo(int insumoId) async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/movimientos/insumo/$insumoId'),
+        Uri.parse('${ApiConfig.baseUrl}/api/movimientos/insumo/$insumoId'),
       );
 
       if (response.statusCode == 200) {
@@ -91,7 +91,7 @@ class MovimientoService {
 
       final response = await http.get(
         Uri.parse(
-          '${ApiConfig.baseUrl}/movimientos/fecha?inicio=$inicio&fin=$fin',
+          '${ApiConfig.baseUrl}/api/movimientos/fecha?inicio=$inicio&fin=$fin',
         ),
       );
 

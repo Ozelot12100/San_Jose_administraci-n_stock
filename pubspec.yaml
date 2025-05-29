@@ -55,6 +55,7 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   shared_preferences: ^2.5.3
   downloads_path_provider_28: ^0.1.2
+  file_selector: ^1.0.3
 
 dev_dependencies:
   flutter_test:

@@ -5,6 +5,7 @@ import 'dart:io';
 import '../config/api_config.dart';
 import 'package:downloads_path_provider_28/downloads_path_provider_28.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ReporteData {
   final String titulo;
@@ -27,7 +28,7 @@ class ReporteService {
   Future<ReporteData> getReporteInventario() async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/reportes/inventario'),
+        Uri.parse('${ApiConfig.baseUrl}/api/reportes/inventario'),
       );
 
       if (response.statusCode == 200) {
@@ -44,7 +45,7 @@ class ReporteService {
   Future<List<Map<String, dynamic>>> getReporteStockSimple() async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/reportes/stock'),
+        Uri.parse('${ApiConfig.baseUrl}/api/reportes/stock'),
       );
 
       if (response.statusCode == 200) {
@@ -69,7 +70,7 @@ class ReporteService {
 
       final response = await http.get(
         Uri.parse(
-          '${ApiConfig.baseUrl}/reportes/movimientos?inicio=$inicioStr&fin=$finStr',
+          '${ApiConfig.baseUrl}/api/reportes/movimientos?inicio=$inicioStr&fin=$finStr',
         ),
       );
 
@@ -94,7 +95,7 @@ class ReporteService {
 
       final response = await http.get(
         Uri.parse(
-          '${ApiConfig.baseUrl}/reportes/movimientos-simple?inicio=$inicioStr&fin=$finStr',
+          '${ApiConfig.baseUrl}/api/reportes/movimientos-simple?inicio=$inicioStr&fin=$finStr',
         ),
       );
 
@@ -116,7 +117,7 @@ class ReporteService {
     try {
       final response = await http.get(
         Uri.parse(
-          '${ApiConfig.baseUrl}/reportes/insumos-proveedor/$proveedorId',
+          '${ApiConfig.baseUrl}/api/reportes/insumos-proveedor/$proveedorId',
         ),
       );
 
@@ -142,7 +143,7 @@ class ReporteService {
 
       final response = await http.get(
         Uri.parse(
-          '${ApiConfig.baseUrl}/reportes/consumo-areas?inicio=$inicioStr&fin=$finStr',
+          '${ApiConfig.baseUrl}/api/reportes/consumo-areas?inicio=$inicioStr&fin=$finStr',
         ),
       );
 
@@ -168,7 +169,7 @@ class ReporteService {
 
       final response = await http.get(
         Uri.parse(
-          '${ApiConfig.baseUrl}/reportes/consumo-area/$areaId?inicio=$inicioStr&fin=$finStr',
+          '${ApiConfig.baseUrl}/api/reportes/consumo-area/$areaId?inicio=$inicioStr&fin=$finStr',
         ),
       );
 
@@ -189,7 +190,7 @@ class ReporteService {
   Future<ReporteData> getReporteBajoStock(int umbral) async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/reportes/bajo-stock?umbral=$umbral'),
+        Uri.parse('${ApiConfig.baseUrl}/api/reportes/bajo-stock?umbral=$umbral'),
       );
 
       if (response.statusCode == 200) {
@@ -200,6 +201,11 @@ class ReporteService {
     } catch (e) {
       throw Exception('Error de conexión: ${e.toString()}');
     }
+  }
+
+  Future<String> _getRutaDescarga() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('ruta_descarga') ?? r'C:\Users\david\Downloads';
   }
 
   // Descargar reporte en PDF
@@ -214,17 +220,13 @@ class ReporteService {
 
       final response = await http.get(
         Uri.parse(
-          '${ApiConfig.baseUrl}/reportes/$tipoReporte/pdf?$queryParams',
+          '${ApiConfig.baseUrl}/api/reportes/$tipoReporte/pdf?$queryParams',
         ),
       );
 
       if (response.statusCode == 200) {
-        Directory? directory;
-        if (Platform.isWindows) {
-          directory = Directory(r'C:\Users\david\Downloads');
-        } else {
-          directory = await getApplicationDocumentsDirectory();
-        }
+        final rutaDescarga = await _getRutaDescarga();
+        final directory = Directory(rutaDescarga);
         final now = DateTime.now();
         final fechaStr = DateFormat('yyyy-MM-dd').format(now);
         String baseName = 'reporte_${tipoReporte}_$fechaStr.pdf';
@@ -257,17 +259,13 @@ class ReporteService {
 
       final response = await http.get(
         Uri.parse(
-          '${ApiConfig.baseUrl}/reportes/$tipoReporte/excel?$queryParams',
+          '${ApiConfig.baseUrl}/api/reportes/$tipoReporte/excel?$queryParams',
         ),
       );
 
       if (response.statusCode == 200) {
-        Directory? directory;
-        if (Platform.isWindows) {
-          directory = Directory(r'C:\Users\david\Downloads');
-        } else {
-          directory = await getApplicationDocumentsDirectory();
-        }
+        final rutaDescarga = await _getRutaDescarga();
+        final directory = Directory(rutaDescarga);
         final now = DateTime.now();
         final fechaStr = DateFormat('yyyy-MM-dd').format(now);
         String baseName = 'reporte_${tipoReporte}_$fechaStr.xlsx';
@@ -300,17 +298,13 @@ class ReporteService {
 
       final response = await http.get(
         Uri.parse(
-          '${ApiConfig.baseUrl}/reportes/$tipoReporte/csv?$queryParams',
+          '${ApiConfig.baseUrl}/api/reportes/$tipoReporte/csv?$queryParams',
         ),
       );
 
       if (response.statusCode == 200) {
-        Directory? directory;
-        if (Platform.isWindows) {
-          directory = Directory(r'C:\Users\david\Downloads');
-        } else {
-          directory = await getApplicationDocumentsDirectory();
-        }
+        final rutaDescarga = await _getRutaDescarga();
+        final directory = Directory(rutaDescarga);
         final now = DateTime.now();
         final fechaStr = DateFormat('yyyy-MM-dd').format(now);
         String baseName = 'reporte_${tipoReporte}_$fechaStr.csv';

@@ -217,30 +217,18 @@ class _MovimientoFormState extends State<MovimientoForm> {
     // Validaciones estrictas
     if (widget.tipo != 'entrada' && widget.tipo != 'salida') {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tipo de movimiento inválido.')),
-      );
       return;
     }
     if (_insumoId == null || _insumoId == 0) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Debes seleccionar un insumo válido.')),
-      );
       return;
     }
     if (usuarioId == null || usuarioId == 0) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error: Usuario no válido.')),
-      );
       return;
     }
     if (finalAreaId == null || finalAreaId == 0) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Debes seleccionar un área válida.')),
-      );
       return;
     }
 
@@ -257,25 +245,12 @@ class _MovimientoFormState extends State<MovimientoForm> {
 
     if (mounted) {
       if (success) {
-        Navigator.pop(context);
-        try {
-          final insumoProvider = Provider.of<InsumoProvider>(
-            context,
-            listen: false,
-          );
-          insumoProvider.fetchInsumos();
-        } catch (_) {}
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${widget.tipo == 'entrada' ? 'Entrada' : 'Salida'} registrada correctamente',
-            ),
-          ),
-        );
+        // Actualizar ambos providers
+        Provider.of<InsumoProvider>(context, listen: false).fetchInsumos();
+        Provider.of<MovimientoProvider>(context, listen: false).fetchMovimientos();
+        Navigator.pop(context, true); // Devolver true para refrescar pantallas
       } else if (provider.error != null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(provider.error!)));
+        // No mostrar mensaje de error aquí
       }
       setState(() => _isLoading = false);
     }

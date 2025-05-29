@@ -28,7 +28,7 @@ class AlertaStockCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
-      color: _getColorPorNivel(),
+      color: Theme.of(context).colorScheme.secondaryContainer,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -37,16 +37,17 @@ class AlertaStockCard extends StatelessWidget {
             Row(
               children: [
                 Icon(_getIconoPorNivel(), 
-                  color: alerta.esUrgente ? Colors.red : Colors.orange,
+                  color: alerta.esUrgente ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.tertiary,
                   size: 28,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     alerta.insumo.nombreInsumo,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSecondaryContainer,
                     ),
                   ),
                 ),
@@ -61,18 +62,18 @@ class AlertaStockCard extends StatelessWidget {
                   children: [
                     Text(
                       'Stock Actual: ${alerta.stockActual}',
-                      style: const TextStyle(fontSize: 16),
+                      style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSecondaryContainer),
                     ),
                     Text(
                       'Stock Mínimo: ${alerta.stockMinimo}',
-                      style: const TextStyle(fontSize: 16),
+                      style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSecondaryContainer),
                     ),
                   ],
                 ),
                 CircularProgressIndicator(
                   value: alerta.porcentajeStock / 100,
-                  backgroundColor: Colors.grey.shade300,
-                  color: alerta.esUrgente ? Colors.red : Colors.orange,
+                  backgroundColor: Theme.of(context).colorScheme.onSecondaryContainer.withOpacity(0.2),
+                  color: alerta.esUrgente ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.tertiary,
                 ),
               ],
             ),
@@ -81,7 +82,7 @@ class AlertaStockCard extends StatelessWidget {
               'Nivel de Stock: ${alerta.porcentajeStock.toStringAsFixed(1)}%',
               style: TextStyle(
                 fontSize: 16,
-                color: alerta.esUrgente ? Colors.red : Colors.orange,
+                color: alerta.esUrgente ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.tertiary,
                 fontWeight: FontWeight.bold,
               ),
             ),

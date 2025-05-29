@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/reporte_provider.dart';
+import 'package:file_selector/file_selector.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ReportesScreen extends StatefulWidget {
   const ReportesScreen({super.key});
@@ -15,6 +17,31 @@ class _ReportesScreenState extends State<ReportesScreen> {
   DateTime _fechaInicio = DateTime.now().subtract(const Duration(days: 30));
   DateTime _fechaFin = DateTime.now();
   int _umbral = 10;
+  String? _rutaDescarga;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarRutaDescarga();
+  }
+
+  Future<void> _cargarRutaDescarga() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _rutaDescarga = prefs.getString('ruta_descarga') ?? r'C:\Users\david\Downloads';
+    });
+  }
+
+  Future<void> _seleccionarRutaDescarga() async {
+    final path = await getDirectoryPath();
+    if (path != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('ruta_descarga', path);
+      setState(() {
+        _rutaDescarga = path;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,13 +59,13 @@ class _ReportesScreenState extends State<ReportesScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              _buildRutaDescarga(theme),
+              const SizedBox(height: 16),
               _buildReportSelector(theme),
               const SizedBox(height: 24),
               _buildReportParameters(theme),
               const SizedBox(height: 24),
-              _buildFormatSelector(theme),
-              const SizedBox(height: 24),
-              _buildActionButtons(theme),
+              _buildFormatAndActions(theme),
               const SizedBox(height: 24),
               Expanded(child: _buildReportResults(theme)),
             ],
@@ -48,8 +75,50 @@ class _ReportesScreenState extends State<ReportesScreen> {
     );
   }
 
+  Widget _buildRutaDescarga(ThemeData theme) {
+    return Card(
+      color: theme.brightness == Brightness.dark ? Colors.grey[800] : Colors.blueGrey[50],
+      elevation: 1,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            Icon(Icons.folder, color: theme.brightness == Brightness.dark ? Colors.blue[200] : Colors.blueGrey),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Tooltip(
+                message: _rutaDescarga ?? "C:/Users/david/Downloads",
+                child: Text(
+                  'Carpeta de descarga: ${_rutaDescarga ?? "C:/Users/david/Downloads"}',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton.icon(
+              onPressed: _seleccionarRutaDescarga,
+              icon: Icon(Icons.folder_open, color: theme.brightness == Brightness.dark ? Colors.white : Colors.white),
+              label: const Text('Cambiar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                textStyle: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildReportSelector(ThemeData theme) {
     return Card(
+      color: theme.brightness == Brightness.dark ? Colors.grey[900] : null,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -60,18 +129,22 @@ class _ReportesScreenState extends State<ReportesScreen> {
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
+                color: theme.brightness == Brightness.dark ? Colors.white : null,
               ),
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               isExpanded: true,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 8,
                 ),
+                filled: true,
+                fillColor: theme.brightness == Brightness.dark ? Colors.grey[850] : Colors.white,
               ),
+              dropdownColor: theme.brightness == Brightness.dark ? Colors.grey[900] : Colors.white,
               value: _selectedReport,
               items: const [
                 DropdownMenuItem(
@@ -96,6 +169,9 @@ class _ReportesScreenState extends State<ReportesScreen> {
                   _selectedReport = value!;
                 });
               },
+              style: TextStyle(
+                color: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
+              ),
             ),
           ],
         ),
@@ -112,6 +188,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
       case 'movimientos':
       case 'consumo':
         return Card(
+          color: theme.brightness == Brightness.dark ? Colors.grey[900] : null,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -122,6 +199,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
+                    color: theme.brightness == Brightness.dark ? Colors.white : null,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -151,6 +229,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
 
       case 'bajo-stock':
         return Card(
+          color: theme.brightness == Brightness.dark ? Colors.grey[900] : null,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -161,16 +240,25 @@ class _ReportesScreenState extends State<ReportesScreen> {
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
+                    color: theme.brightness == Brightness.dark ? Colors.white : null,
                   ),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Umbral mínimo de stock',
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
+                    filled: true,
+                    fillColor: theme.brightness == Brightness.dark ? Colors.grey[850] : Colors.white,
+                    labelStyle: TextStyle(
+                      color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black54,
+                    ),
                   ),
                   keyboardType: TextInputType.number,
                   initialValue: _umbral.toString(),
+                  style: TextStyle(
+                    color: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
+                  ),
                   onChanged: (value) {
                     setState(() {
                       _umbral = int.tryParse(value) ?? 10;
@@ -187,38 +275,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
     }
   }
 
-  Widget _buildFormatSelector(ThemeData theme) {
-    return Consumer<ReporteProvider>(
-      builder: (context, provider, _) {
-        return Row(
-          children: [
-            Text(
-              'Formato de descarga:',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(width: 16),
-            DropdownButton<String>(
-              value: provider.formatoDescarga,
-              items: const [
-                DropdownMenuItem(value: 'pdf', child: Text('PDF')),
-                DropdownMenuItem(value: 'excel', child: Text('Excel')),
-                DropdownMenuItem(value: 'csv', child: Text('CSV')),
-              ],
-              onChanged: (value) {
-                if (value != null) {
-                  provider.cambiarFormato(value);
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildActionButtons(ThemeData theme) {
+  Widget _buildFormatAndActions(ThemeData theme) {
     return Consumer<ReporteProvider>(
       builder: (context, provider, _) {
         final buttonStyle = FilledButton.styleFrom(
@@ -227,31 +284,63 @@ class _ReportesScreenState extends State<ReportesScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           textStyle: const TextStyle(fontWeight: FontWeight.bold),
         );
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return Card(
+          color: theme.brightness == Brightness.dark ? Colors.grey[900] : Colors.blueGrey[50],
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+                Icon(Icons.file_download, color: theme.colorScheme.primary),
+                const SizedBox(width: 12),
+                Text(
+                  'Formato de descarga:',
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 12),
+                SizedBox(
+                  width: 120,
+                  child: DropdownButtonFormField<String>(
+                    value: provider.formatoDescarga,
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      filled: true,
+                      fillColor: theme.brightness == Brightness.dark ? Colors.grey[850] : Colors.white,
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'pdf', child: Text('PDF')),
+                      DropdownMenuItem(value: 'excel', child: Text('Excel')),
+                      DropdownMenuItem(value: 'csv', child: Text('CSV')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) provider.cambiarFormato(value);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 24),
             Expanded(
               child: FilledButton.icon(
                 icon: const Icon(Icons.refresh),
                 label: const Text('Generar Reporte'),
                 style: buttonStyle,
-                onPressed:
-                    provider.isLoading ? null : () => _generarReporte(provider),
+                    onPressed: provider.isLoading ? null : () => _generarReporte(provider),
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: FilledButton.icon(
                 icon: const Icon(Icons.download),
-                label: Text(
-                  'Descargar ${provider.formatoDescarga.toUpperCase()}',
-                ),
+                    label: Text('Descargar ${provider.formatoDescarga.toUpperCase()}'),
                 style: buttonStyle,
-                onPressed:
-                    provider.isLoading ? null : () => _descargarReporte(provider),
+                    onPressed: provider.isLoading ? null : () => _descargarReporte(provider),
               ),
             ),
           ],
+            ),
+          ),
         );
       },
     );
@@ -265,9 +354,10 @@ class _ReportesScreenState extends State<ReportesScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(),
+                SizedBox(height: 24),
+                CircularProgressIndicator(color: Colors.blue),
                 SizedBox(height: 16),
-                Text('Generando reporte...'),
+                Text('Generando o descargando reporte...'),
               ],
             ),
           );
@@ -293,23 +383,37 @@ class _ReportesScreenState extends State<ReportesScreen> {
         if (provider.reporteActual == null) {
           return const Center(
             child: Text(
-              'Seleccione un reporte y genérelo para ver los resultados',
+              'Seleccione los parámetros y genere el reporte para ver la vista previa.',
+              style: TextStyle(color: Colors.grey),
             ),
           );
         }
-        return Card(
+        return Expanded(
+          child: Card(
           elevation: 2,
           margin: const EdgeInsets.symmetric(vertical: 8),
-          child: SingleChildScrollView(
+            child: Container(
+              color: Colors.blueGrey[25],
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.preview, color: Colors.blueGrey),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Vista previa del reporte',
+                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
                 Text(
                   provider.reporteActual!.titulo,
                   style: theme.textTheme.titleLarge,
                 ),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                 if (provider.reporteActual!.datos.isEmpty)
                   Center(
                     child: Text(
@@ -320,40 +424,70 @@ class _ReportesScreenState extends State<ReportesScreen> {
                     ),
                   )
                 else
-                  SingleChildScrollView(
+                    Flexible(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: theme.brightness == Brightness.dark
+                              ? Colors.grey[900]
+                              : Colors.white,
+                          border: Border.all(
+                            color: theme.brightness == Brightness.dark
+                                ? Colors.blueGrey[700]!
+                                : Colors.blueGrey[100]!,
+                            width: 1,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Scrollbar(
+                          thumbVisibility: true,
+                          child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.vertical,
                     child: DataTable(
-                      columns:
-                          provider.reporteActual!.datos.first.keys
+                                columns: provider.reporteActual!.datos.first.keys
                               .map(
                                 (col) => DataColumn(
                                   label: Text(
                                     col,
-                                    style: const TextStyle(
+                                          style: TextStyle(
                                       fontWeight: FontWeight.bold,
+                                            color: theme.brightness == Brightness.dark
+                                                ? Colors.white
+                                                : Colors.black,
                                     ),
                                   ),
                                 ),
                               )
                               .toList(),
-                      rows:
-                          provider.reporteActual!.datos
+                                rows: provider.reporteActual!.datos
                               .map(
                                 (fila) => DataRow(
-                                  cells:
-                                      fila.values
+                                        cells: fila.values
                                           .map(
                                             (valor) => DataCell(
-                                              Text(valor?.toString() ?? ''),
+                                                Text(
+                                                  valor?.toString() ?? '',
+                                                  style: TextStyle(
+                                                    color: theme.brightness == Brightness.dark
+                                                        ? Colors.white70
+                                                        : Colors.black87,
+                                                  ),
+                                                ),
                                             ),
                                           )
                                           .toList(),
                                 ),
                               )
                               .toList(),
+                              ),
+                            ),
+                          ),
+                        ),
                     ),
                   ),
               ],
+              ),
             ),
           ),
         );
@@ -423,13 +557,19 @@ class _ReportesScreenState extends State<ReportesScreen> {
 
   Future<void> _descargarReporte(ReporteProvider provider) async {
     Map<String, dynamic> params = {};
-
+    String tipoReporte = _selectedReport;
     switch (_selectedReport) {
       case 'inventario':
         // Sin parámetros adicionales
         break;
       case 'movimientos':
+        params = {
+          'inicio': _fechaInicio.toIso8601String().split('T')[0],
+          'fin': _fechaFin.toIso8601String().split('T')[0],
+        };
+        break;
       case 'consumo':
+        tipoReporte = 'consumo-areas';
         params = {
           'inicio': _fechaInicio.toIso8601String().split('T')[0],
           'fin': _fechaFin.toIso8601String().split('T')[0],
@@ -441,14 +581,34 @@ class _ReportesScreenState extends State<ReportesScreen> {
     }
 
     final success = await provider.descargarReporteActual(
-      _selectedReport,
+      tipoReporte,
       params,
     );
 
     if (success && mounted) {
       final ruta = provider.rutaArchivoDescargado;
+      final theme = Theme.of(context);
+      final isDark = theme.brightness == Brightness.dark;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Reporte descargado correctamente en:\n$ruta')),
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: isDark ? Colors.greenAccent : Colors.green, size: 28),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Reporte descargado correctamente en:\n$ruta',
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: isDark ? Colors.grey[900] : Colors.green[50],
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     }
   }

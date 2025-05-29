@@ -44,6 +44,11 @@ namespace SanJoseAPI.Controllers
             if (string.IsNullOrWhiteSpace(usuarioDto.Usuario) || string.IsNullOrWhiteSpace(usuarioDto.Rol) || string.IsNullOrWhiteSpace(usuarioDto.Contrasena))
                 return BadRequest("Usuario, Rol y Contraseña son obligatorios.");
 
+            // Validar unicidad de nombre de usuario (ignorando mayúsculas/minúsculas)
+            var existe = await _usuarioRepository.ExisteUsuarioAsync(usuarioDto.Usuario);
+            if (existe)
+                return BadRequest("Ya existe un usuario con ese nombre de usuario.");
+
             // Forzar área para administradores
             int? idArea = usuarioDto.Rol == "administrador" ? 5 : usuarioDto.IdArea;
 
@@ -69,6 +74,14 @@ namespace SanJoseAPI.Controllers
             var usuario = await _usuarioRepository.GetByIdAsync(id);
             if (usuario == null)
                 return NotFound();
+
+            // Validar unicidad de nombre de usuario (ignorando mayúsculas/minúsculas)
+            if (!usuario.NombreUsuario.Equals(usuarioDto.Usuario, StringComparison.OrdinalIgnoreCase))
+            {
+                var existe = await _usuarioRepository.ExisteUsuarioAsync(usuarioDto.Usuario);
+                if (existe)
+                    return BadRequest("Ya existe un usuario con ese nombre de usuario.");
+            }
 
             usuario.NombreUsuario = usuarioDto.Usuario;
             usuario.Rol = usuarioDto.Rol;

@@ -8,7 +8,7 @@ class ProveedorService {
   Future<List<Proveedor>> getProveedores() async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/proveedores'),
+        Uri.parse('${ApiConfig.baseUrl}/api/proveedores'),
       );
 
       if (response.statusCode == 200) {
@@ -26,7 +26,7 @@ class ProveedorService {
   Future<Proveedor> getProveedorById(int id) async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/proveedores/$id'),
+        Uri.parse('${ApiConfig.baseUrl}/api/proveedores/$id'),
       );
 
       if (response.statusCode == 200) {
@@ -43,7 +43,7 @@ class ProveedorService {
   Future<Proveedor> createProveedor(Proveedor proveedor) async {
     try {
       final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/proveedores'),
+        Uri.parse('${ApiConfig.baseUrl}/api/proveedores'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(proveedor.toJson()),
       );
@@ -62,7 +62,7 @@ class ProveedorService {
   Future<Proveedor> updateProveedor(int id, Proveedor proveedor) async {
     try {
       final response = await http.put(
-        Uri.parse('${ApiConfig.baseUrl}/proveedores/$id'),
+        Uri.parse('${ApiConfig.baseUrl}/api/proveedores/$id'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(proveedor.toJson()),
       );
@@ -81,7 +81,7 @@ class ProveedorService {
   Future<bool> deleteProveedor(int id) async {
     try {
       final response = await http.delete(
-        Uri.parse('${ApiConfig.baseUrl}/proveedores/$id'),
+        Uri.parse('${ApiConfig.baseUrl}/api/proveedores/$id'),
       );
 
       return response.statusCode == 204;

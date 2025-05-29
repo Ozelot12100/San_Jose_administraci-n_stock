@@ -71,7 +71,8 @@ class ProveedorProvider extends ChangeNotifier {
       // Usar el método actualizado del servicio
       final createdProveedor = await _service.createProveedor(proveedor);
       
-      _proveedores.add(createdProveedor);
+      // Recargar la lista completa desde el backend para asegurar sincronización
+      await fetchProveedores();
       return true;
     } catch (e) {
       _error = e.toString();

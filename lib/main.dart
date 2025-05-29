@@ -57,6 +57,13 @@ class _MyAppState extends State<MyApp> {
   Future<void> _initApp() async {
     final authProvider = context.read<AuthProvider>();
     await authProvider.checkExistingSession();
+
+    // Carga inicial de datos globales
+    context.read<InsumoProvider>().fetchInsumos();
+    context.read<MovimientoProvider>().fetchMovimientos();
+    context.read<ProveedorProvider>().fetchProveedores();
+    context.read<AlertaProvider>().fetchAlertas();
+
     setState(() {
       _initialized = true;
     });

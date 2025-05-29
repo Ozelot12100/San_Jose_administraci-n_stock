@@ -8,7 +8,7 @@ class AlertaService {
   Future<List<AlertaStock>> getAlertasStock() async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/insumos/bajo-stock'),
+        Uri.parse('${ApiConfig.baseUrl}/api/insumos/bajo-stock'),
         headers: {'Content-Type': 'application/json'},
       );
 

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/proveedor.dart';
 import '../../providers/proveedor_provider.dart';
+import '../../providers/insumo_provider.dart';
+import '../../providers/movimiento_provider.dart';
 import 'proveedor_form.dart';
 
 class ProveedoresScreen extends StatelessWidget {
@@ -15,6 +17,17 @@ class ProveedoresScreen extends StatelessWidget {
         appBar: AppBar(
           title: const Text('Proveedores'),
           automaticallyImplyLeading: false, // Para no mostrar flecha de regreso (usa el drawer)
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Actualizar',
+              onPressed: () async {
+                await Provider.of<ProveedorProvider>(context, listen: false).fetchProveedores();
+                await Provider.of<InsumoProvider>(context, listen: false).fetchInsumos();
+                await Provider.of<MovimientoProvider>(context, listen: false).fetchMovimientos();
+              },
+            ),
+          ],
         ),
         body: Consumer<ProveedorProvider>(
           builder: (context, provider, _) {
@@ -100,6 +113,7 @@ class ProveedoresScreen extends StatelessWidget {
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () => _mostrarFormulario(context, Provider.of<ProveedorProvider>(context, listen: false)),
+          backgroundColor: Colors.green,
           child: const Icon(Icons.add),
         ),
       ),
@@ -119,6 +133,14 @@ class ProveedoresScreen extends StatelessWidget {
     );
     if (result == true) {
       provider.fetchProveedores();
+      Provider.of<InsumoProvider>(context, listen: false).fetchInsumos();
+      Provider.of<MovimientoProvider>(context, listen: false).fetchMovimientos();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(proveedor == null ? 'Proveedor creado correctamente' : 'Proveedor actualizado correctamente'),
+          backgroundColor: proveedor == null ? Colors.green : Colors.blue,
+        ),
+      );
     }
   }
 
@@ -142,6 +164,12 @@ class ProveedoresScreen extends StatelessWidget {
                   SnackBar(content: Text(provider.error!)),
                 );
               }
+              provider.fetchProveedores();
+              Provider.of<InsumoProvider>(context, listen: false).fetchInsumos();
+              Provider.of<MovimientoProvider>(context, listen: false).fetchMovimientos();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Proveedor eliminado correctamente'), backgroundColor: Colors.red),
+              );
             },
             child: const Text('Eliminar'),
           ),

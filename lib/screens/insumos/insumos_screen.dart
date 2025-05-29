@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/insumo_provider.dart';
 import '../../providers/proveedor_provider.dart';
 import '../../models/proveedor.dart';
+import 'package:flutter/services.dart';
 
 class InsumosScreen extends StatelessWidget {
   const InsumosScreen({super.key});
@@ -64,14 +65,26 @@ class InsumosScreen extends StatelessWidget {
                     controller: stockController,
                     decoration: const InputDecoration(labelText: 'Stock'),
                     keyboardType: TextInputType.number,
-                    validator: (v) => v == null || v.isEmpty ? 'Campo obligatorio' : null,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Campo obligatorio';
+                      final n = int.tryParse(v);
+                      if (n == null || n < 0) return 'Solo números enteros positivos';
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: stockMinimoController,
                     decoration: const InputDecoration(labelText: 'Stock Mínimo'),
                     keyboardType: TextInputType.number,
-                    validator: (v) => v == null || v.isEmpty ? 'Campo obligatorio' : null,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Campo obligatorio';
+                      final n = int.tryParse(v);
+                      if (n == null || n < 0) return 'Solo números enteros positivos';
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<int>(
@@ -125,9 +138,17 @@ class InsumosScreen extends StatelessWidget {
                           }
                           if (ok && context.mounted) {
                             Navigator.pop(context);
+                            Provider.of<InsumoProvider>(context, listen: false).fetchInsumos();
+                            Provider.of<ProveedorProvider>(context, listen: false).fetchProveedores();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(esEdicion ? 'Insumo actualizado correctamente' : 'Insumo creado correctamente'),
+                                backgroundColor: esEdicion ? Colors.blue : Colors.green,
+                              ),
+                            );
                           } else if (provider.error != null && context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(provider.error!)),
+                              SnackBar(content: Text(provider.error!), backgroundColor: Colors.red),
                             );
                           }
                         },
@@ -160,6 +181,11 @@ class InsumosScreen extends StatelessWidget {
             onPressed: () async {
               await provider.deleteInsumo(insumo.id);
               if (context.mounted) Navigator.pop(context);
+              Provider.of<InsumoProvider>(context, listen: false).fetchInsumos();
+              Provider.of<ProveedorProvider>(context, listen: false).fetchProveedores();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Insumo eliminado correctamente'), backgroundColor: Colors.red),
+              );
             },
             child: const Text('Eliminar'),
           ),
@@ -170,118 +196,118 @@ class InsumosScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => InsumoProvider()..fetchInsumos()),
-        ChangeNotifierProvider(create: (_) => ProveedorProvider()..fetchProveedores()),
-      ],
-      child: Consumer2<InsumoProvider, ProveedorProvider>(
-        builder: (context, provider, proveedorProvider, _) {
-          if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (provider.error != null) {
-            return Center(child: Text('Error: \\${provider.error}'));
-          }
-          if (provider.insumos.isEmpty) {
-            return const Center(child: Text('No hay insumos registrados.'));
-          }
-          return Stack(
-            children: [
-              ListView.builder(
-                itemCount: provider.insumos.length,
-                padding: const EdgeInsets.all(12),
-                itemBuilder: (context, index) {
-                  final insumo = provider.insumos[index];
-                  final isLowStock = insumo.stock <= insumo.stockMinimo;
-                  return Card(
-                    elevation: 2,
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    child: ListTile(
-                      leading: Icon(
-                        Icons.inventory_2,
-                        color: isLowStock ? Colors.red : Colors.blue,
-                      ),
-                      title: Text(
-                        insumo.nombreInsumo,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+    final provider = context.watch<InsumoProvider>();
+    final proveedorProvider = context.watch<ProveedorProvider>();
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Insumos'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Actualizar',
+            onPressed: () async {
+              await provider.fetchInsumos();
+              await proveedorProvider.fetchProveedores();
+              // Si quieres, también puedes recargar movimientos aquí
+              // await Provider.of<MovimientoProvider>(context, listen: false).fetchMovimientos();
+            },
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          ListView.builder(
+            itemCount: provider.insumos.length,
+            padding: const EdgeInsets.all(12),
+            itemBuilder: (context, index) {
+              final insumo = provider.insumos[index];
+              final isLowStock = insumo.stock <= insumo.stockMinimo;
+              return Card(
+                elevation: 2,
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                child: ListTile(
+                  leading: Icon(
+                    Icons.inventory_2,
+                    color: isLowStock ? Colors.red : Colors.blue,
+                  ),
+                  title: Text(
+                    insumo.nombreInsumo,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (insumo.descripcion != null && insumo.descripcion!.isNotEmpty)
+                        Row(
+                          children: [
+                            const Icon(Icons.description, size: 16, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Text('Descripción: ${insumo.descripcion!}'),
+                          ],
+                        ),
+                      if (insumo.unidad != null && insumo.unidad!.isNotEmpty)
+                        Row(
+                          children: [
+                            const Icon(Icons.straighten, size: 16, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Text('Unidad: ${insumo.unidad!}'),
+                          ],
+                        ),
+                      Row(
                         children: [
-                          if (insumo.descripcion != null && insumo.descripcion!.isNotEmpty)
-                            Row(
-                              children: [
-                                const Icon(Icons.description, size: 16, color: Colors.grey),
-                                const SizedBox(width: 4),
-                                Text('Descripción: ${insumo.descripcion!}'),
-                              ],
-                            ),
-                          if (insumo.unidad != null && insumo.unidad!.isNotEmpty)
-                            Row(
-                              children: [
-                                const Icon(Icons.straighten, size: 16, color: Colors.grey),
-                                const SizedBox(width: 4),
-                                Text('Unidad: ${insumo.unidad!}'),
-                              ],
-                            ),
-                          Row(
-                            children: [
-                              const Icon(Icons.confirmation_number, size: 16, color: Colors.grey),
-                              const SizedBox(width: 4),
-                              Text('Stock: ', style: TextStyle(fontWeight: FontWeight.w500)),
-                              Text(
-                                '${insumo.stock}',
-                                style: TextStyle(
-                                  color: isLowStock ? Colors.red : Colors.black,
-                                  fontWeight: isLowStock ? FontWeight.bold : FontWeight.normal,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              const Icon(Icons.warning_amber, size: 16, color: Colors.orange),
-                              Text('Mínimo: ${insumo.stockMinimo}'),
-                            ],
+                          const Icon(Icons.confirmation_number, size: 16, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Text('Stock: ', style: TextStyle(fontWeight: FontWeight.w500)),
+                          Text(
+                            '${insumo.stock}',
+                            style: TextStyle(
+                          color: isLowStock ? Colors.red : Colors.green,
+                            fontWeight: isLowStock ? FontWeight.bold : FontWeight.normal,
                           ),
-                          if (insumo.idProveedor != null && proveedorProvider.proveedores.isNotEmpty)
-                            Row(
-                              children: [
-                                const Icon(Icons.local_shipping, size: 16, color: Colors.grey),
-                                const SizedBox(width: 4),
-                                Text('Proveedor: ${proveedorProvider.proveedores.firstWhere((p) => p.id == insumo.idProveedor, orElse: () => Proveedor(id: 0, nombreProveedor: 'Desconocido')).nombreProveedor}'),
-                              ],
-                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Icon(Icons.warning_amber, size: 16, color: Colors.orange),
+                          Text('Mínimo: ${insumo.stockMinimo}'),
                         ],
                       ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (isLowStock)
-                            const Icon(Icons.warning, color: Colors.red),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            tooltip: 'Eliminar',
-                            onPressed: () => _confirmarEliminar(context, insumo),
-                          ),
-                        ],
+                      if (insumo.idProveedor != null && proveedorProvider.proveedores.isNotEmpty)
+                        Row(
+                          children: [
+                            const Icon(Icons.local_shipping, size: 16, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Text('Proveedor: ${proveedorProvider.proveedores.firstWhere((p) => p.id == insumo.idProveedor, orElse: () => Proveedor(id: 0, nombreProveedor: 'Desconocido')).nombreProveedor}'),
+                          ],
+                        ),
+                    ],
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isLowStock)
+                        const Icon(Icons.warning, color: Colors.red),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        tooltip: 'Eliminar',
+                        onPressed: () => _confirmarEliminar(context, insumo),
                       ),
-                      onTap: () => _mostrarModalInsumo(context, insumo: insumo, esEdicion: true),
-                    ),
-                  );
-                },
-              ),
-              Positioned(
-                bottom: 24,
-                right: 24,
-                child: FloatingActionButton(
-                  backgroundColor: Colors.green,
-                  onPressed: () => _mostrarModalInsumo(context, esEdicion: false),
-                  tooltip: 'Agregar Insumo',
-                  child: const Icon(Icons.add),
+                    ],
+                  ),
+                  onTap: () => _mostrarModalInsumo(context, insumo: insumo, esEdicion: true),
                 ),
-              ),
-            ],
-          );
-        },
+              );
+            },
+          ),
+          Positioned(
+            bottom: 24,
+            right: 24,
+            child: FloatingActionButton(
+              backgroundColor: Colors.green,
+              onPressed: () => _mostrarModalInsumo(context, esEdicion: false),
+              tooltip: 'Agregar Insumo',
+              child: const Icon(Icons.add),
+            ),
+          ),
+        ],
       ),
     );
   }

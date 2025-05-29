@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 
 class ApiService {
-  // La URL base para la API de .NET Core
-  final String baseUrl = 'http://localhost:5177'; // Puerto por defecto de .NET 6+
+  // Usar la URL base centralizada
+  final String baseUrl = ApiConfig.baseUrl;
 
   Future<dynamic> get(String endpoint) async {
     try {

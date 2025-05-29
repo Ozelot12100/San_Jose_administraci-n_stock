@@ -11,7 +11,7 @@ class AuthService {
   Future<Usuario> login(String nombreUsuario, String password) async {
     try {
       final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/Auth/login-simple'),
+        Uri.parse('${ApiConfig.baseUrl}/api/Auth/login-simple'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'usuario': nombreUsuario,

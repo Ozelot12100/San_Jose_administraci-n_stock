@@ -11,6 +11,7 @@ import '../../services/movimiento_service.dart';
 import '../../services/proveedor_service.dart';
 import '../../models/alerta_stock.dart';
 import '../../widgets/alerta_stock_card.dart';
+import '../../providers/auth_provider.dart';
 
 class DashboardScreen extends StatefulWidget {
   final void Function(int index)? onNavigate;
@@ -22,32 +23,11 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Actualizar datos cada vez que se entra al dashboard
-    Future.microtask(() {
-      context.read<InsumoProvider>().fetchInsumos();
-      context.read<MovimientoProvider>().fetchMovimientos();
-      context.read<AlertaProvider>().fetchAlertas();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => InsumoProvider()..fetchInsumos()),
-        ChangeNotifierProvider(create: (_) => MovimientoProvider()..fetchMovimientos()),
-        ChangeNotifierProvider(create: (_) => AlertaProvider()),
-        ChangeNotifierProvider(create: (_) => ProveedorProvider()..fetchProveedores()),
-      ],
-      child: Builder(
-        builder: (context) {
           final insumoProvider = context.watch<InsumoProvider>();
           final movimientoProvider = context.watch<MovimientoProvider>();
           final alertaProvider = context.watch<AlertaProvider>();
           final proveedorProvider = context.watch<ProveedorProvider>();
-
           return Scaffold(
             appBar: AppBar(
               title: const Text('Dashboard'),
@@ -56,11 +36,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 IconButton(
                   icon: const Icon(Icons.refresh),
                   tooltip: 'Actualizar',
-                  onPressed: () {
-                    insumoProvider.fetchInsumos();
-                    movimientoProvider.fetchMovimientos();
-                    alertaProvider.fetchAlertas();
-                    proveedorProvider.fetchProveedores();
+                  onPressed: () async {
+                    await insumoProvider.fetchInsumos();
+                    await movimientoProvider.fetchMovimientos();
+                    await proveedorProvider.fetchProveedores();
+                    await alertaProvider.fetchAlertas();
                   },
                 ),
               ],
@@ -83,61 +63,73 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                 ),
               ),
-            ),
-          );
-        },
       ),
     );
   }
 
   Widget _buildWelcomeCard(BuildContext context) {
     final currentTime = DateTime.now();
-    String greeting;
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final nombreUsuario = authProvider.currentUser?.nombreUsuario ?? '';
     
+    String saludo;
     if (currentTime.hour < 12) {
-      greeting = "Buenos días";
+      saludo = "¡Buenos días";
     } else if (currentTime.hour < 18) {
-      greeting = "Buenas tardes";
+      saludo = "¡Buenas tardes";
     } else {
-      greeting = "Buenas noches";
+      saludo = "¡Buenas noches";
     }
     
     return Card(
-      elevation: 2,
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      color: Theme.of(context).colorScheme.primaryContainer,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(22.0),
+        child: Row(
           children: [
-            Row(
-              children: [
-                const CircleAvatar(
-                  radius: 24,
-                  backgroundColor: Colors.blue,
-                  child: Icon(Icons.medical_services, color: Colors.white, size: 28),
+            CircleAvatar(
+              radius: 32,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              child: Icon(Icons.waving_hand_rounded, color: Colors.white, size: 36),
                 ),
-                const SizedBox(width: 16),
-                Column(
+            const SizedBox(width: 24),
+            Expanded(
+              child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$greeting,',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    Text(
-                      'Sistema de Inventario - Clínica San José',
+                    nombreUsuario.isNotEmpty
+                        ? '$saludo,\n$nombreUsuario!'
+                        : '$saludo!',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '¡Bienvenido al sistema de inventario de la Clínica San José! Esperamos que tengas un excelente día gestionando tus insumos.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.85),
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today, size: 18, color: Theme.of(context).colorScheme.primary),
+                      const SizedBox(width: 6),
+                      Text(
+                        DateFormat('EEEE, d MMMM yyyy', 'es').format(currentTime),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.7),
                       ),
                     ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Fecha: ${DateFormat('EEEE, d MMMM yyyy', 'es').format(currentTime)}',
-              style: Theme.of(context).textTheme.bodyLarge,
             ),
           ],
         ),
@@ -368,7 +360,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             'Actividad Reciente',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
-              color: Colors.blueGrey[800],
+              color: Theme.of(context).colorScheme.primary,
               letterSpacing: 1.2,
             ),
             textAlign: TextAlign.center,
@@ -439,7 +431,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             'Alertas de Stock',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
-              color: Colors.red[700],
+              color: Theme.of(context).colorScheme.error,
               letterSpacing: 1.2,
             ),
             textAlign: TextAlign.center,

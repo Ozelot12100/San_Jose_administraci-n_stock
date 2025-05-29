@@ -160,6 +160,7 @@ class UsuariosScreen extends StatelessWidget {
             context,
             Provider.of<UsuarioProvider>(context, listen: false),
           ),
+          backgroundColor: Colors.green,
           child: const Icon(Icons.add),
                       )
                     : null,
@@ -216,6 +217,11 @@ class UsuariosScreen extends StatelessWidget {
               if (context.mounted && provider.error != null) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(provider.error!)),
+                );
+              } else {
+                provider.fetchUsuarios();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Usuario eliminado correctamente'), backgroundColor: Colors.red),
                 );
               }
             },

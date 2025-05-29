@@ -6,6 +6,7 @@ import '../../providers/movimiento_provider.dart';
 import 'movimiento_form.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/insumo_provider.dart';
+import '../../providers/proveedor_provider.dart';
 
 class MovimientosScreen extends StatefulWidget {
   const MovimientosScreen({super.key});
@@ -33,20 +34,13 @@ class _MovimientosScreenState extends State<MovimientosScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => MovimientoProvider()..fetchMovimientos()),
-        ChangeNotifierProvider(create: (_) => InsumoProvider()..fetchInsumos()),
-      ],
-      child: Builder(
-        builder: (context) {
           final isAdmin = Provider.of<AuthProvider>(context, listen: false).currentUser?.isAdmin ?? false;
           final authProvider = Provider.of<AuthProvider>(context, listen: false);
-          final provider = context.watch<MovimientoProvider>();
-          // Filtros activos
-          final filtersActive = (provider.busquedaInsumo != null && provider.busquedaInsumo!.isNotEmpty) ||
-                                provider.tipoMovimiento != null ||
-                                provider.fechaInicio != null;
+    final provider = context.watch<MovimientoProvider>();
+    // Filtros activos
+    final filtersActive = (provider.busquedaInsumo != null && provider.busquedaInsumo!.isNotEmpty) ||
+                          provider.tipoMovimiento != null ||
+                          provider.fechaInicio != null;
           return Scaffold(
         appBar: AppBar(
           title: const Text('Movimientos'),
@@ -61,99 +55,109 @@ class _MovimientosScreenState extends State<MovimientosScreen> {
                       if (context.mounted) {
                         Navigator.of(context).pushReplacementNamed('/login');
                       }
-                    },
-                  ),
-              ],
-            ),
-            body: Column(
-              children: [
-                // Zona de filtros
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Buscador
-                          TextField(
-                            controller: _busquedaController,
-                            decoration: InputDecoration(
-                              hintText: 'Buscar por nombre de insumo',
-                              prefixIcon: const Icon(Icons.search),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                              contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
-                            ),
-                            onChanged: (value) {
-                              context.read<MovimientoProvider>().setFiltros(busquedaInsumo: value);
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          // Filtro de tipo
-                          Row(
-                            children: [
-                              const Text('Tipo:', style: TextStyle(fontWeight: FontWeight.w500)),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: SegmentedButton<String?>(
-                                  segments: const [
-                                    ButtonSegment(value: null, label: Text('Todos')),
-                                    ButtonSegment(value: 'entrada', label: Text('Entradas')),
-                                    ButtonSegment(value: 'salida', label: Text('Salidas')),
-                                  ],
-                                  selected: {provider.tipoMovimiento},
-                                  onSelectionChanged: (values) {
-                                    context.read<MovimientoProvider>().setFiltros(tipoMovimiento: values.first);
               },
-                                ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Actualizar',
+              onPressed: () async {
+                await Provider.of<MovimientoProvider>(context, listen: false).fetchMovimientos();
+                await Provider.of<InsumoProvider>(context, listen: false).fetchInsumos();
+                await Provider.of<ProveedorProvider>(context, listen: false).fetchProveedores();
+              },
             ),
           ],
         ),
-                          const SizedBox(height: 12),
-                          // Filtro de rango de fechas
-                          Row(
+      body: Column(
+        children: [
+          // Zona de filtros
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                              Expanded(
-                                child: _FechaFiltroField(
-                                  label: 'Fecha inicio',
-                                  value: provider.fechaInicio,
-                                  onChanged: (date) {
-                                    context.read<MovimientoProvider>().setFiltros(fechaInicio: date);
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _FechaFiltroField(
-                                  label: 'Fecha fin',
-                                  value: provider.fechaFin,
-                                  onChanged: (date) {
-                                    context.read<MovimientoProvider>().setFiltros(fechaFin: date);
-                                  },
-                                ),
-                              ),
-                              if (provider.fechaInicio != null || provider.fechaFin != null)
-                                IconButton(
-                                  icon: const Icon(Icons.clear, size: 20),
-                                  tooltip: 'Limpiar rango',
-                                  onPressed: () {
-                                    context.read<MovimientoProvider>().setFiltros(fechaInicio: null, fechaFin: null);
-                                  },
+                    // Buscador
+                    TextField(
+                      controller: _busquedaController,
+                      decoration: InputDecoration(
+                        hintText: 'Buscar por nombre de insumo',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+                      ),
+                      onChanged: (value) {
+                        context.read<MovimientoProvider>().setFiltros(busquedaInsumo: value);
+                      },
                     ),
-                  ],
-                ),
+                    const SizedBox(height: 12),
+                    // Filtro de tipo solo para admin
+                    if (isAdmin)
+                      Row(
+                        children: [
+                          const Text('Tipo:', style: TextStyle(fontWeight: FontWeight.w500)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: SegmentedButton<String?>(
+                              segments: const [
+                                ButtonSegment(value: null, label: Text('Todos')),
+                                ButtonSegment(value: 'entrada', label: Text('Entradas')),
+                                ButtonSegment(value: 'salida', label: Text('Salidas')),
+                              ],
+                              selected: {provider.tipoMovimiento},
+                              onSelectionChanged: (values) {
+                                context.read<MovimientoProvider>().setFiltros(tipoMovimiento: values.first);
+                              },
+                            ),
+                          ),
                         ],
                       ),
-                    ),
-                  ),
+                    if (isAdmin) const SizedBox(height: 12),
+                    // Filtro de rango de fechas
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _FechaFiltroField(
+                            label: 'Fecha inicio',
+                            value: provider.fechaInicio,
+                            onChanged: (date) {
+                              context.read<MovimientoProvider>().setFiltros(fechaInicio: date);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _FechaFiltroField(
+                            label: 'Fecha fin',
+                            value: provider.fechaFin,
+                            onChanged: (date) {
+                              context.read<MovimientoProvider>().setFiltros(fechaFin: date);
+                            },
+                          ),
+                        ),
+                        if (provider.fechaInicio != null || provider.fechaFin != null)
+                          IconButton(
+                            icon: const Icon(Icons.clear, size: 20),
+                            tooltip: 'Limpiar rango',
+                            onPressed: () {
+                              context.read<MovimientoProvider>().setFiltros(fechaInicio: null, fechaFin: null);
+                            },
+                          ),
+                  ],
                 ),
-                // Barra de filtros activos
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Barra de filtros activos
                 if (filtersActive)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: Row(
                       children: [
                         const Icon(Icons.filter_list, size: 20),
@@ -174,40 +178,42 @@ class _MovimientosScreenState extends State<MovimientosScreen> {
                   ),
                 // Lista de movimientos
                 Expanded(
-                  child: provider.isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : provider.error != null
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text('Error: \\${provider.error}'),
-                              const SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: () => provider.fetchMovimientos(),
-                                child: const Text('Reintentar'),
-                              ),
-                            ],
-                          ),
-                        )
-                      : provider.movimientos.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                if (filtersActive) ...[
-                                  const Text('No hay movimientos con los filtros seleccionados'),
-                                  const SizedBox(height: 16),
-                                  ElevatedButton(
-                                    onPressed: () => provider.clearFiltros(),
-                                    child: const Text('Limpiar Filtros'),
-                                  ),
-                                ] else
-                                  const Text('No hay movimientos registrados'),
-                              ],
+            child: provider.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : provider.error != null
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('Error: \\${provider.error}'),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => provider.fetchMovimientos(),
+                          child: const Text('Reintentar'),
+                        ),
+                      ],
+                    ),
+                  )
+                : provider.movimientos.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (filtersActive) ...[
+                            const Text('No hay movimientos con los filtros seleccionados'),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () => provider.clearFiltros(),
+                              child: const Text('Limpiar Filtros'),
                             ),
-                          )
-                        : ListView.builder(
+                          ] else
+                            isAdmin
+                              ? const Text('No hay movimientos registrados')
+                              : const Text('Aún no has registrado salidas de insumos.'),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
                     itemCount: provider.movimientos.length,
                         padding: const EdgeInsets.all(12),
                     itemBuilder: (context, index) {
@@ -222,7 +228,7 @@ class _MovimientosScreenState extends State<MovimientosScreen> {
                                 size: 32,
                           ),
                           title: Text(
-                                    '${movimiento.insumo?.nombreInsumo ?? 'Insumo #${movimiento.insumoId}'} | Cantidad: ${movimiento.cantidad}',
+                      '${movimiento.insumo?.nombreInsumo ?? 'Insumo #${movimiento.insumoId}'} | Cantidad: ${movimiento.cantidad}',
                                 style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           subtitle: Column(
@@ -263,9 +269,13 @@ class _MovimientosScreenState extends State<MovimientosScreen> {
                 ),
               ],
         ),
-        floatingActionButton: _buildFab(context),
-          );
-        },
+      floatingActionButton: isAdmin
+        ? _buildFab(context)
+        : FloatingActionButton(
+            onPressed: () => _registrarMovimiento(context, 'salida'),
+            heroTag: 'fab-salida',
+            backgroundColor: Colors.red,
+            child: const Icon(Icons.remove),
       ),
     );
   }
@@ -293,8 +303,8 @@ class _MovimientosScreenState extends State<MovimientosScreen> {
     );
   }
 
-  void _registrarMovimiento(BuildContext context, String tipo) {
-    showModalBottomSheet(
+  void _registrarMovimiento(BuildContext context, String tipo) async {
+    final result = await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (context) => ChangeNotifierProvider.value(
@@ -307,6 +317,18 @@ class _MovimientosScreenState extends State<MovimientosScreen> {
         ),
       ),
     );
+    if (result == true && mounted) {
+      context.read<MovimientoProvider>().fetchMovimientos();
+      context.read<InsumoProvider>().fetchInsumos();
+      context.read<ProveedorProvider>().fetchProveedores();
+      // Detectar tipo de movimiento para el color
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Movimiento registrado correctamente'),
+          backgroundColor: tipo == 'entrada' ? Colors.green : Colors.red,
+        ),
+      );
+    }
   }
 
   String _buildFilterText(MovimientoProvider provider) {

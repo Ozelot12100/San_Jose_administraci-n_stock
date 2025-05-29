@@ -40,6 +40,9 @@ class UsuarioProvider extends ChangeNotifier {
       }
       return false;
     } catch (e) {
+      if (e.toString().contains('Ya existe un usuario con ese nombre')) {
+        return false;
+      }
       _error = e.toString();
       notifyListeners();
       return false;
@@ -59,6 +62,9 @@ class UsuarioProvider extends ChangeNotifier {
       }
       return false;
     } catch (e) {
+      if (e.toString().contains('Ya existe un usuario con ese nombre')) {
+        return false;
+      }
       _error = e.toString();
       notifyListeners();
       return false;

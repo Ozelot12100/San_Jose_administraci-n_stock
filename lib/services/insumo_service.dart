@@ -8,7 +8,7 @@ class InsumoService {
   Future<List<Insumo>> getInsumos() async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/insumos'),
+        Uri.parse('${ApiConfig.baseUrl}/api/insumos'),
       );
 
       if (response.statusCode == 200) {
@@ -26,7 +26,7 @@ class InsumoService {
   Future<Insumo> getInsumoById(int id) async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/insumos/$id'),
+        Uri.parse('${ApiConfig.baseUrl}/api/insumos/$id'),
       );
 
       if (response.statusCode == 200) {
@@ -45,7 +45,7 @@ class InsumoService {
       final jsonBody = json.encode(insumo.toJson());
       print('JSON enviado al backend (crear insumo): $jsonBody');
       final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/insumos'),
+        Uri.parse('${ApiConfig.baseUrl}/api/insumos'),
         headers: {'Content-Type': 'application/json'},
         body: jsonBody,
       );
@@ -71,7 +71,7 @@ class InsumoService {
   Future<Insumo> updateInsumo(int id, Insumo insumo) async {
     try {
       final response = await http.put(
-        Uri.parse('${ApiConfig.baseUrl}/insumos/$id'),
+        Uri.parse('${ApiConfig.baseUrl}/api/insumos/$id'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(insumo.toJson()),
       );
@@ -92,7 +92,7 @@ class InsumoService {
   Future<bool> deleteInsumo(int id) async {
     try {
       final response = await http.delete(
-        Uri.parse('${ApiConfig.baseUrl}/insumos/$id'),
+        Uri.parse('${ApiConfig.baseUrl}/api/insumos/$id'),
       );
 
       return response.statusCode == 204;

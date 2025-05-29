@@ -66,10 +66,6 @@ class _MainLayoutState extends State<MainLayout> {
             icon: const CircleAvatar(child: Icon(Icons.person_outline)),
             itemBuilder: (context) => [
               PopupMenuItem(
-                value: "edit",
-                child: const ListTile(leading: Icon(Icons.edit), title: Text("Editar datos")),
-              ),
-              PopupMenuItem(
                 value: "theme",
                 child: ListTile(
                   leading: Icon(themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode),
@@ -84,9 +80,6 @@ class _MainLayoutState extends State<MainLayout> {
             ],
             onSelected: (value) async {
               switch (value) {
-                case "edit":
-                  // TODO: Implementar edición de datos (por ejemplo, editar perfil del área)
-                  break;
                 case "theme":
                   themeProvider.toggleTheme();
                   break;

@@ -24,6 +24,7 @@ class _UsuarioFormState extends State<UsuarioForm> {
   int? _idArea;
   List<Area> _areas = [];
   bool _cargandoAreas = true;
+  final _nombreUsuarioError = ValueNotifier<String?>(null);
 
   @override
   void initState() {
@@ -82,9 +83,10 @@ class _UsuarioFormState extends State<UsuarioForm> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _nombreController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Nombre de Usuario',
                 border: OutlineInputBorder(),
+                errorText: _nombreUsuarioError.value,
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -191,6 +193,7 @@ class _UsuarioFormState extends State<UsuarioForm> {
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () async {
+                    _nombreUsuarioError.value = null;
                     if (_formKey.currentState!.validate()) {
                       final data = {
                         if (esEdicion) 'id': widget.usuario!.id,
@@ -211,10 +214,20 @@ class _UsuarioFormState extends State<UsuarioForm> {
 
                       if (ok && context.mounted) {
                         Navigator.pop(context);
-                      } else if (provider.error != null && context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(provider.error!)),
+                          SnackBar(
+                            content: Text(esEdicion ? 'Usuario actualizado correctamente' : 'Usuario creado correctamente'),
+                            backgroundColor: esEdicion ? Colors.blue : Colors.green,
+                          ),
                         );
+                      } else if (context.mounted) {
+                        _nombreUsuarioError.value = 'Ese nombre de usuario ya no está disponible. Por favor, elige otro.';
+                        setState(() {});
+                        if (provider.error != null && !provider.error!.contains('Ya existe un usuario con ese nombre')) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(provider.error!), backgroundColor: Colors.red),
+                          );
+                        }
                       }
                     }
                   },
