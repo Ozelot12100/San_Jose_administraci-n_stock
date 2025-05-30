@@ -11,111 +11,110 @@ class ProveedoresScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ProveedorProvider()..fetchProveedores(),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Proveedores'),
-          automaticallyImplyLeading: false, // Para no mostrar flecha de regreso (usa el drawer)
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              tooltip: 'Actualizar',
-              onPressed: () async {
-                await Provider.of<ProveedorProvider>(context, listen: false).fetchProveedores();
-                await Provider.of<InsumoProvider>(context, listen: false).fetchInsumos();
-                await Provider.of<MovimientoProvider>(context, listen: false).fetchMovimientos();
-              },
-            ),
-          ],
-        ),
-        body: Consumer<ProveedorProvider>(
-          builder: (context, provider, _) {
-            if (provider.isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (provider.error != null) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('Error: ${provider.error}'),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => provider.fetchProveedores(),
-                      child: const Text('Reintentar'),
-                    ),
-                  ],
+    // Usar el provider global
+    final proveedorProvider = Provider.of<ProveedorProvider>(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Proveedores'),
+        automaticallyImplyLeading: false, // Para no mostrar flecha de regreso (usa el drawer)
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Actualizar',
+            onPressed: () async {
+              await proveedorProvider.fetchProveedores();
+              await Provider.of<InsumoProvider>(context, listen: false).fetchInsumos();
+              await Provider.of<MovimientoProvider>(context, listen: false).fetchMovimientos();
+            },
+          ),
+        ],
+      ),
+      body: Consumer<ProveedorProvider>(
+        builder: (context, provider, _) {
+          if (provider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (provider.error != null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Error: ${provider.error}'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => provider.fetchProveedores(),
+                    child: const Text('Reintentar'),
+                  ),
+                ],
+              ),
+            );
+          }
+          if (provider.proveedores.isEmpty) {
+            return const Center(child: Text('No hay proveedores registrados.'));
+          }
+          return ListView.builder(
+            itemCount: provider.proveedores.length,
+            padding: const EdgeInsets.all(12),
+            itemBuilder: (context, index) {
+              final proveedor = provider.proveedores[index];
+              return Card(
+                elevation: 2,
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                child: ListTile(
+                  leading: const Icon(Icons.local_shipping, color: Colors.blue),
+                  title: Text(
+                    proveedor.nombreProveedor,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (proveedor.direccion != null && proveedor.direccion!.isNotEmpty)
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Text('Dirección: ${proveedor.direccion!}'),
+                          ],
+                        ),
+                      if (proveedor.telefono != null && proveedor.telefono!.isNotEmpty)
+                        Row(
+                          children: [
+                            const Icon(Icons.phone, size: 16, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Text('Teléfono: ${proveedor.telefono!}'),
+                          ],
+                        ),
+                    ],
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.blue),
+                        onPressed: () {
+                          _mostrarFormulario(context, proveedorProvider, proveedor);
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () {
+                          _confirmarEliminacion(context, proveedorProvider, proveedor);
+                        },
+                      ),
+                    ],
+                  ),
+                  onTap: () => _mostrarFormulario(context, proveedorProvider, proveedor),
                 ),
               );
-            }
-            if (provider.proveedores.isEmpty) {
-              return const Center(child: Text('No hay proveedores registrados.'));
-            }
-            return ListView.builder(
-              itemCount: provider.proveedores.length,
-              padding: const EdgeInsets.all(12),
-              itemBuilder: (context, index) {
-                final proveedor = provider.proveedores[index];
-                return Card(
-                  elevation: 2,
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  child: ListTile(
-                    leading: const Icon(Icons.local_shipping, color: Colors.blue),
-                    title: Text(
-                      proveedor.nombreProveedor,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (proveedor.direccion != null && proveedor.direccion!.isNotEmpty)
-                          Row(
-                            children: [
-                              const Icon(Icons.location_on, size: 16, color: Colors.grey),
-                              const SizedBox(width: 4),
-                              Text('Dirección: ${proveedor.direccion!}'),
-                            ],
-                          ),
-                        if (proveedor.telefono != null && proveedor.telefono!.isNotEmpty)
-                          Row(
-                            children: [
-                              const Icon(Icons.phone, size: 16, color: Colors.grey),
-                              const SizedBox(width: 4),
-                              Text('Teléfono: ${proveedor.telefono!}'),
-                            ],
-                          ),
-                      ],
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.blue),
-                          onPressed: () {
-                            _mostrarFormulario(context, provider, proveedor);
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () {
-                            _confirmarEliminacion(context, provider, proveedor);
-                          },
-                        ),
-                      ],
-                    ),
-                    onTap: () => _mostrarFormulario(context, provider, proveedor),
-                  ),
-                );
-              },
-            );
-          },
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => _mostrarFormulario(context, Provider.of<ProveedorProvider>(context, listen: false)),
-          backgroundColor: Colors.green,
-          child: const Icon(Icons.add),
-        ),
+            },
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _mostrarFormulario(context, proveedorProvider),
+        backgroundColor: Colors.green,
+        child: const Icon(Icons.add),
       ),
     );
   }

@@ -69,6 +69,9 @@ class ProveedorService {
 
       if (response.statusCode == 200) {
         return Proveedor.fromJson(json.decode(response.body));
+      } else if (response.statusCode == 204) {
+        // Si el backend responde 204 No Content, devolvemos el proveedor enviado
+        return proveedor;
       } else {
         throw Exception('Error al actualizar el proveedor');
       }
