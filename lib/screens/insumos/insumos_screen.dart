@@ -215,99 +215,99 @@ class InsumosScreen extends StatelessWidget {
         ],
       ),
       body: Stack(
-        children: [
-          ListView.builder(
-            itemCount: provider.insumos.length,
-            padding: const EdgeInsets.all(12),
-            itemBuilder: (context, index) {
-              final insumo = provider.insumos[index];
-              final isLowStock = insumo.stock <= insumo.stockMinimo;
-              return Card(
-                elevation: 2,
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                child: ListTile(
-                  leading: Icon(
-                    Icons.inventory_2,
-                    color: isLowStock ? Colors.red : Colors.blue,
-                  ),
-                  title: Text(
-                    insumo.nombreInsumo,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (insumo.descripcion != null && insumo.descripcion!.isNotEmpty)
-                        Row(
-                          children: [
-                            const Icon(Icons.description, size: 16, color: Colors.grey),
-                            const SizedBox(width: 4),
-                            Text('Descripción: ${insumo.descripcion!}'),
-                          ],
-                        ),
-                      if (insumo.unidad != null && insumo.unidad!.isNotEmpty)
-                        Row(
-                          children: [
-                            const Icon(Icons.straighten, size: 16, color: Colors.grey),
-                            const SizedBox(width: 4),
-                            Text('Unidad: ${insumo.unidad!}'),
-                          ],
-                        ),
-                      Row(
+            children: [
+              ListView.builder(
+                itemCount: provider.insumos.length,
+                padding: const EdgeInsets.all(12),
+                itemBuilder: (context, index) {
+                  final insumo = provider.insumos[index];
+                  final isLowStock = insumo.stock <= insumo.stockMinimo;
+                  return Card(
+                    elevation: 2,
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    child: ListTile(
+                      leading: Icon(
+                        Icons.inventory_2,
+                        color: isLowStock ? Colors.red : Colors.blue,
+                      ),
+                      title: Text(
+                        insumo.nombreInsumo,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.confirmation_number, size: 16, color: Colors.grey),
-                          const SizedBox(width: 4),
-                          Text('Stock: ', style: TextStyle(fontWeight: FontWeight.w500)),
-                          Text(
-                            '${insumo.stock}',
-                            style: TextStyle(
-                          color: isLowStock ? Colors.red : Colors.green,
-                            fontWeight: isLowStock ? FontWeight.bold : FontWeight.normal,
+                          if (insumo.descripcion != null && insumo.descripcion!.isNotEmpty)
+                            Row(
+                              children: [
+                                const Icon(Icons.description, size: 16, color: Colors.grey),
+                                const SizedBox(width: 4),
+                                Text('Descripción: ${insumo.descripcion!}'),
+                              ],
+                            ),
+                          if (insumo.unidad != null && insumo.unidad!.isNotEmpty)
+                            Row(
+                              children: [
+                                const Icon(Icons.straighten, size: 16, color: Colors.grey),
+                                const SizedBox(width: 4),
+                                Text('Unidad: ${insumo.unidad!}'),
+                              ],
+                            ),
+                          Row(
+                            children: [
+                              const Icon(Icons.confirmation_number, size: 16, color: Colors.grey),
+                              const SizedBox(width: 4),
+                              Text('Stock: ', style: TextStyle(fontWeight: FontWeight.w500)),
+                              Text(
+                                '${insumo.stock}',
+                                style: TextStyle(
+                            color: isLowStock ? Colors.red : Colors.green,
+                                  fontWeight: isLowStock ? FontWeight.bold : FontWeight.normal,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Icon(Icons.warning_amber, size: 16, color: Colors.orange),
+                              Text('Mínimo: ${insumo.stockMinimo}'),
+                            ],
                           ),
-                          ),
-                          const SizedBox(width: 12),
-                          const Icon(Icons.warning_amber, size: 16, color: Colors.orange),
-                          Text('Mínimo: ${insumo.stockMinimo}'),
+                          if (insumo.idProveedor != null && proveedorProvider.proveedores.isNotEmpty)
+                            Row(
+                              children: [
+                                const Icon(Icons.local_shipping, size: 16, color: Colors.grey),
+                                const SizedBox(width: 4),
+                                Text('Proveedor: ${proveedorProvider.proveedores.firstWhere((p) => p.id == insumo.idProveedor, orElse: () => Proveedor(id: 0, nombreProveedor: 'Desconocido')).nombreProveedor}'),
+                              ],
+                            ),
                         ],
                       ),
-                      if (insumo.idProveedor != null && proveedorProvider.proveedores.isNotEmpty)
-                        Row(
-                          children: [
-                            const Icon(Icons.local_shipping, size: 16, color: Colors.grey),
-                            const SizedBox(width: 4),
-                            Text('Proveedor: ${proveedorProvider.proveedores.firstWhere((p) => p.id == insumo.idProveedor, orElse: () => Proveedor(id: 0, nombreProveedor: 'Desconocido')).nombreProveedor}'),
-                          ],
-                        ),
-                    ],
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (isLowStock)
-                        const Icon(Icons.warning, color: Colors.red),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        tooltip: 'Eliminar',
-                        onPressed: () => _confirmarEliminar(context, insumo),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isLowStock)
+                            const Icon(Icons.warning, color: Colors.red),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            tooltip: 'Eliminar',
+                            onPressed: () => _confirmarEliminar(context, insumo),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  onTap: () => _mostrarModalInsumo(context, insumo: insumo, esEdicion: true),
+                      onTap: () => _mostrarModalInsumo(context, insumo: insumo, esEdicion: true),
+                    ),
+                  );
+                },
+              ),
+              Positioned(
+                bottom: 24,
+                right: 24,
+                child: FloatingActionButton(
+                  backgroundColor: Colors.green,
+                  onPressed: () => _mostrarModalInsumo(context, esEdicion: false),
+                  tooltip: 'Agregar Insumo',
+                  child: const Icon(Icons.add),
                 ),
-              );
-            },
-          ),
-          Positioned(
-            bottom: 24,
-            right: 24,
-            child: FloatingActionButton(
-              backgroundColor: Colors.green,
-              onPressed: () => _mostrarModalInsumo(context, esEdicion: false),
-              tooltip: 'Agregar Insumo',
-              child: const Icon(Icons.add),
-            ),
-          ),
-        ],
+              ),
+            ],
       ),
     );
   }
